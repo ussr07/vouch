@@ -24,7 +24,14 @@ ENTITY_MODEL = os.environ.get("VOUCH_ENTITY_MODEL", "groq/openai/gpt-oss-20b")
 FALLBACK_MODELS = os.environ.get(
     "VOUCH_FALLBACK_MODELS", "gemini/gemini-3.5-flash-lite,groq/qwen/qwen3.8-27b").split(",")
 
-_client = OpenAI(base_url=BIFROST_URL, api_key="handled-by-bifrost", timeout=120)
+# Time limits: one request waits at most REQUEST_TIMEOUT seconds and is retried
+# once (Bifrost already switches models on failure). Before, the library default
+# of 2 retries with a 120 s timeout let a single brief hang for about 6 minutes.
+REQUEST_TIMEOUT = 45
+SLOW_ATTEMPT = 30   # if a first attempt took this long, don't spend another on bad JSON
+
+_client = OpenAI(base_url=BIFROST_URL, api_key="handled-by-bifrost",
+                 timeout=REQUEST_TIMEOUT, max_retries=1)
 
 
 @dataclass
@@ -46,7 +53,10 @@ def _extract_json(text: str) -> dict:
     start, end = text.find("{"), text.rfind("}")
     if start == -1 or end == -1:
         raise ValueError("model reply contained no JSON object")
-    return json.loads(text[start:end + 1])
+    parsed = json.loads(text[start:end + 1])
+    if not isinstance(parsed, dict):
+        raise ValueError("model reply was JSON but not an object")
+    return parsed
 
 
 def chat_json(system: str, user: str, max_tokens: int = 6000,
@@ -69,6 +79,8 @@ def chat_json(system: str, user: str, max_tokens: int = 6000,
                         "reasoning_effort": reasoning},
         )
         reply = raw.parse()
+        if not reply.choices:
+            raise RuntimeError("the model returned no answer")
         routing = (raw.http_response.json().get("extra_fields") or {}).get("routing_info") or {}
         info = CallInfo(
             served_by=f"{routing.get('provider', '?')}/{routing.get('model', reply.model)}",
@@ -81,4 +93,8 @@ def chat_json(system: str, user: str, max_tokens: int = 6000,
             return _extract_json(reply.choices[0].message.content or ""), info
         except (ValueError, json.JSONDecodeError) as e:
             last_error = e
+            if reply.choices[0].finish_reason == "length":
+                raise RuntimeError("the model's reply was cut off before it finished") from e
+            if info.seconds > SLOW_ATTEMPT:
+                break  # a second slow attempt would keep the person waiting too long
     raise RuntimeError(f"model did not return valid JSON twice: {last_error}")

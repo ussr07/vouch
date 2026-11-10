@@ -30,10 +30,12 @@ $("meeting").value = `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-
 const STAGES = {
   search: { running: "Searching the last 30 days of news",
             done: (d) => `Found ${plural(d.found, "article")}` +
-                         (d.credits ? ` (${plural(d.credits, "search credit")} used)` : " (from cache, no credits used)") },
+                         (d.credits ? ` (${plural(d.credits, "search credit")} used)` : " (from cache, no credits used)") +
+                         (d.failed && d.failed.length ? `; the ${d.failed.join(", ")} search failed` : "") },
   filter: { done: (d) => `Kept ${d.kept}, threw out ${d.rejected}` },
   entity: { running: "Checking every article is about the same one",
-            done: (d) => d.needs_choice ? `Found ${d.groups} different subjects with this name`
+            done: (d) => d.skipped ? "Couldn't run the same-subject check; continuing without it"
+                       : d.needs_choice ? `Found ${d.groups} different subjects with this name`
                        : d.set_aside ? `Kept ${d.kept} about ${d.label || "this subject"}, set aside ${d.set_aside} about others`
                        : `All ${d.kept} articles are about the same subject` },
   draft:  { running: (d) => `Writing the draft with ${d.model}`,
@@ -67,12 +69,13 @@ function showFailure(message) {
 function storyRow(s, i) {
   const quote = h("blockquote", { class: "quote" },
     h("mark", { text: `“${s.quote}”` }),
-    h("cite", {}, "Found word for word in ", h("a", { href: s.quote_url, target: "_blank", rel: "noopener", text: s.quote_site })));
+    h("cite", {}, "Found word for word in ",
+      s.quote_url ? h("a", { href: s.quote_url, target: "_blank", rel: "noopener", text: s.quote_site }) : s.quote_site));
 
   const sources = h("details", { class: "sources" },
     h("summary", { text: `${plural(s.sources.length, "article")} behind this` }),
     h("ul", {}, s.sources.map((src) =>
-      h("li", {}, h("a", { href: src.url, target: "_blank", rel: "noopener", text: src.title }),
+      h("li", {}, src.url ? h("a", { href: src.url, target: "_blank", rel: "noopener", text: src.title }) : src.title,
         ` (${src.site}, ${fmtDate(src.date)})`))));
 
   return h("article", { class: "row", id: `story-${i + 1}` },
@@ -110,7 +113,7 @@ function ledger(l) {
     h("h4", { text: title }),
     group(items).map((r) => h("div", { class: "row" },
       h("p", { class: "struck" },
-        r.url ? h("a", { href: r.url, target: "_blank", rel: "noopener", text: r.title }) : r.item,
+        r.url ? h("a", { href: r.url, target: "_blank", rel: "noopener", text: r.title }) : (r.title || r.item),
         r.count > 1 ? h("span", { class: "times", text: ` ×${r.count}` }) : null),
       h("span", { class: "reason", text: r.reason }))),
   ] : [];
@@ -147,6 +150,7 @@ function renderBrief(b) {
   r.append(h("header", { class: "brief-head" },
     h("h2", { id: "result-title", text: b.subject.name }),
     b.subject.identified_as ? h("p", { class: "identified", text: `Identified as ${b.subject.identified_as}` }) : null,
+    (b.warnings || []).map((w) => h("p", { class: "warning", role: "note", text: w })),
     h("p", { text: `${b.subject.goal[0].toUpperCase() + b.subject.goal.slice(1)} meeting on ${fmtDate(b.subject.meeting)}` +
                    (b.subject.meeting_time ? ` at ${b.subject.meeting_time}` : "") + ". " +
                    `News from ${fmtDate(b.window.start)} to ${fmtDate(b.window.end)}.` }),

@@ -8,13 +8,15 @@ import asyncio
 import json
 import queue
 import threading
+import time
 from datetime import datetime
 from pathlib import Path
 
 import httpx
 import openai
+from tavily import errors as tavily_errors
 from dotenv import load_dotenv
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -23,10 +25,35 @@ load_dotenv(ROOT / ".env")
 
 from app.serialize import brief_to_dict  # noqa: E402
 from vouch.draft import GOALS  # noqa: E402
-from vouch.pipeline import make_brief  # noqa: E402
-from vouch.research import ANGLES  # noqa: E402
+from vouch import store  # noqa: E402
+from vouch.pipeline import Cancelled, make_brief  # noqa: E402
+from vouch.research import ANGLES, meeting_problem  # noqa: E402
 
 STATIC = Path(__file__).resolve().parent / "static"
+
+# One brief at a time: each uses search credits and model quota, so a second
+# request waits its turn instead of doubling the spend.
+BUSY = threading.Semaphore(1)
+HEARTBEAT_SECONDS = 15
+
+
+class _Slot:
+    """One request's hold on BUSY. Released by whichever finishes first: the
+    worker, or the page going away. Releasing twice is harmless."""
+
+    def __init__(self):
+        self._held = False
+        self._lock = threading.Lock()
+
+    def acquire(self) -> bool:
+        self._held = BUSY.acquire(blocking=False)
+        return self._held
+
+    def release(self) -> None:
+        with self._lock:
+            if self._held:
+                self._held = False
+                BUSY.release()
 app = FastAPI(title="Vouch")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
 
@@ -36,28 +63,54 @@ def index():
     return FileResponse(STATIC / "index.html")
 
 
+@app.get("/brief/{brief_id}")
+def brief_page(brief_id: str):
+    """A saved brief's own link: the same page, which loads it by id."""
+    return FileResponse(STATIC / "index.html")
+
+
+@app.get("/api/briefs")
+def list_briefs(limit: int = Query(50, ge=1, le=200)):
+    return {"briefs": store.recent(limit)}
+
+
+@app.get("/api/briefs/{brief_id}")
+def get_brief(brief_id: str):
+    brief = store.get(brief_id)
+    if brief is None:
+        raise HTTPException(status_code=404, detail="No saved brief with that id.")
+    return brief
+
+
 def _event(kind: str, data: dict) -> str:
     """One Server-Sent Event: the browser receives these as they happen."""
     return f"event: {kind}\ndata: {json.dumps(data)}\n\n"
 
 
 def _friendly(error: Exception) -> str:
-    """Errors say what went wrong and how to fix it."""
+    """Errors say what went wrong and how to fix it, recognised by their type."""
+    if isinstance(error, (tavily_errors.InvalidAPIKeyError, tavily_errors.MissingAPIKeyError)):
+        return "Tavily rejected the API key. Check TAVILY_API_KEY in .env (scripts\\set_keys.py)."
+    if isinstance(error, KeyError) and "TAVILY" in str(error):
+        return "TAVILY_API_KEY is missing from .env. Run scripts\\set_keys.py."
+    if isinstance(error, tavily_errors.UsageLimitExceededError):
+        return "Tavily's free credits are used up for this month."
+    if isinstance(error, (tavily_errors.TimeoutError, TimeoutError)):
+        return "The news search timed out. Try again in a moment."
+    if isinstance(error, (tavily_errors.ForbiddenError, tavily_errors.BadRequestError)):
+        return f"Tavily refused the search ({type(error).__name__}). Try a simpler name."
+    if isinstance(error, openai.APITimeoutError):
+        return "The model took too long to answer. Try again; Bifrost may switch to a faster model."
     if isinstance(error, (openai.APIConnectionError, httpx.ConnectError)):
         return ("Can't reach the model gateway. Start Bifrost with "
                 "scripts\\start_bifrost.py, then try again.")
     if isinstance(error, openai.RateLimitError):
-        return "Both models are rate-limited right now. Wait a minute and try again."
-    if isinstance(error, KeyError) and "TAVILY" in str(error):
-        return "TAVILY_API_KEY is missing from .env. Run scripts\\set_keys.py."
-    text = str(error)
-    if "Unauthorized" in text or "401" in text:
-        return "Tavily rejected the API key. Check TAVILY_API_KEY in .env."
-    if "usage limit" in text.lower() or "432" in text:
-        return "Tavily's free credits are used up for this month."
-    if "valid JSON" in text:
-        return "The model replied in a broken format twice. Try again."
-    return f"Something failed while making the brief: {text[:200]}"
+        return "Every model is rate-limited right now. Wait a minute and try again."
+    if isinstance(error, openai.APIStatusError):
+        return f"The model gateway returned an error ({error.status_code}). Try again in a moment."
+    if isinstance(error, RuntimeError):   # our own messages from vouch/llm.py
+        return f"The model's answer couldn't be used: {error}. Try again."
+    return f"Something failed while making the brief: {type(error).__name__}: {str(error)[:160]}"
 
 
 @app.get("/api/brief")
@@ -71,6 +124,8 @@ async def brief_stream(
     name = " ".join(name.split())
     about = " ".join(about.split())
     problems = []
+    if not name:
+        problems.append("Enter a company or person to brief on.")
     if kind not in ANGLES:
         problems.append(f"Choose company or person, not '{kind}'.")
     if goal not in GOALS:
@@ -78,33 +133,65 @@ async def brief_stream(
     try:
         meeting_at = datetime.fromisoformat(meeting)
     except ValueError:
-        problems.append("Give the meeting date as YYYY-MM-DD.")
+        problems.append("Give the meeting date and time, for example 2026-11-14T10:30.")
+    else:
+        if problem := meeting_problem(meeting_at):
+            problems.append(problem)
 
     events: queue.Queue = queue.Queue()
+    cancel = threading.Event()   # set when the person closes the page
+    slot = _Slot()               # this request's hold on BUSY, released exactly once
+
+    def on_step(stage, data):
+        if cancel.is_set():
+            raise Cancelled()    # stop before the next paid step
+        events.put(("step", {"stage": stage, **data}))
 
     def worker():
         try:
-            b = make_brief(name, kind, meeting_at, goal, about=about,
-                           on_step=lambda stage, data: events.put(("step", {"stage": stage, **data})))
-            events.put(("brief", brief_to_dict(b)))
-        except Exception as e:  # report every failure to the page, never hang
+            b = make_brief(name, kind, meeting_at, goal, about=about, on_step=on_step)
+            result = brief_to_dict(b)
+            if not result["choices"]:            # a finished brief, not a which-one question
+                result["id"] = store.save(result)
+            events.put(("brief", result))
+        except Cancelled:
+            pass                 # nobody is listening any more
+        except Exception as e:   # report every failure to the page, never hang
             events.put(("failure", {"message": _friendly(e)}))
-        events.put(None)
+        finally:
+            slot.release()
+            events.put(None)
 
     async def stream():
         if problems:
             yield _event("failure", {"message": " ".join(problems)})
             return
+        if not slot.acquire():
+            yield _event("failure", {"message": "Another brief is being made right now. "
+                                                "Try again when it finishes."})
+            return
         threading.Thread(target=worker, daemon=True).start()
-        while True:
-            try:
-                item = events.get_nowait()
-            except queue.Empty:
-                await asyncio.sleep(0.1)
-                continue
-            if item is None:
-                return
-            yield _event(*item)
+        quiet_since = time.monotonic()
+        try:
+            while True:
+                try:
+                    item = events.get_nowait()
+                except queue.Empty:
+                    if time.monotonic() - quiet_since > HEARTBEAT_SECONDS:
+                        yield ": still working\n\n"   # a comment line keeps the connection open
+                        quiet_since = time.monotonic()
+                    await asyncio.sleep(0.1)
+                    continue
+                if item is None:
+                    return
+                quiet_since = time.monotonic()
+                yield _event(*item)
+        finally:
+            # Page closed or stream ended: the worker stops at its next step. A model
+            # call already in flight can't be interrupted (one took 30 s in testing),
+            # so the slot is freed now rather than making the next person wait for it.
+            cancel.set()
+            slot.release()
 
     return StreamingResponse(stream(), media_type="text/event-stream",
                              headers={"Cache-Control": "no-cache"})

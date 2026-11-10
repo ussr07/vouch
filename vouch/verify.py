@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from datetime import date
 
 from vouch.filters import Kept
+from vouch.shapes import as_dict, as_dicts, as_int, as_ints, as_text
 
 # Different sites use curly or straight quotes and different dashes.
 _CHAR_MAP = str.maketrans({
@@ -124,11 +125,19 @@ def verify(raw: dict, articles: list[Kept], subject: str = "",
     by_number = {i: k for i, k in enumerate(articles, start=1)}
     story_id_to_position: dict[int, int] = {}
 
-    for s in raw.get("stories", []) or []:
-        headline = str(s.get("headline", "")).strip() or "(untitled)"
-        ids = [i for i in s.get("article_ids", []) if isinstance(i, int) and i in by_number]
-        quote = s.get("quote") or {}
-        q_id, q_text = quote.get("article_id"), str(quote.get("text", ""))
+    raw = as_dict(raw)
+    used_story_ids: set[int] = set()
+    for position, s in enumerate(as_dicts(raw.get("stories")), start=1):
+        headline = as_text(s.get("headline")) or "(untitled)"
+        ids = list(dict.fromkeys(i for i in as_ints(s.get("article_ids")) if i in by_number))
+        quote = as_dict(s.get("quote"))
+        q_id, q_text = as_int(quote.get("article_id")), as_text(quote.get("text"))
+        # The model's own story id, if usable; otherwise its position in the list.
+        # Points link to stories through this, so it must be unique.
+        story_id = as_int(s.get("id"))
+        if story_id is None or story_id in used_story_ids:
+            story_id = position
+        used_story_ids.add(story_id)
 
         if not ids:
             out.removed.append((headline, "cites no real article"))
@@ -136,12 +145,15 @@ def verify(raw: dict, articles: list[Kept], subject: str = "",
         if q_id not in by_number:
             out.removed.append((headline, "quote points at an article that doesn't exist"))
             continue
-        if not quote_found(q_text, by_number[q_id].source.title + " " + by_number[q_id].source.snippet):
+        # Headline and text are checked separately: joined, a "quote" stitched
+        # from the end of the headline and the start of the text would pass.
+        cited = by_number[q_id].source
+        if not (quote_found(q_text, cited.title) or quote_found(q_text, cited.snippet)):
             out.removed.append((headline, "quote not found word for word in the cited article"))
             continue
 
         sources = [by_number[i] for i in dict.fromkeys(ids + [q_id])]
-        claim = headline + " " + str(s.get("summary", ""))
+        claim = headline + " " + as_text(s.get("summary"))
         cited_text = " ".join(k.source.title + " " + k.source.snippet for k in sources)
 
         # Check 1: no invented figures. Every number in the claim must appear
@@ -160,23 +172,24 @@ def verify(raw: dict, articles: list[Kept], subject: str = "",
             continue
         out.stories.append(Story(
             headline=headline,
-            summary=str(s.get("summary", "")).strip(),
-            category=str(s.get("category", "other")).strip(),
+            summary=as_text(s.get("summary")),
+            category=as_text(s.get("category")) or "other",
             date=min(k.published for k in sources),
             outlets=sorted({_site(k) for k in sources}),
             sources=sources,
             quote=q_text.strip(),
             quote_source=by_number[q_id],
-            older_event=older_event(q_text + " " + claim, window_start),
+            # Only the quote, which is evidence; the model's own summary is not.
+            older_event=older_event(q_text, window_start),
         ))
-        story_id_to_position[s.get("id")] = len(out.stories)
+        story_id_to_position[story_id] = len(out.stories)
 
     for key, target in (("talking_points", out.talking_points),
                         ("open_questions", out.open_questions)):
-        for p in raw.get(key, []) or []:
-            text = str(p.get("text", "")).strip()
-            linked = [story_id_to_position[i] for i in p.get("story_ids", [])
-                      if i in story_id_to_position]
+        for p in as_dicts(raw.get(key)):
+            text = as_text(p.get("text"))
+            linked = list(dict.fromkeys(story_id_to_position[i] for i in as_ints(p.get("story_ids"))
+                                        if i in story_id_to_position))
             if text and linked:
                 target.append(Point(text, linked))
             elif text:

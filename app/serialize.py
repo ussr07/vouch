@@ -1,5 +1,12 @@
 """Turn a Brief into plain JSON for the browser."""
+from vouch.draft import MAX_ARTICLES
+from vouch.filters import is_web_link
 from vouch.pipeline import Brief
+
+
+def _link(url: str) -> str | None:
+    """Only http(s) addresses leave the server as links; anything else becomes None."""
+    return url if is_web_link(url) else None
 
 
 def _site(url: str) -> str:
@@ -17,6 +24,7 @@ def brief_to_dict(b: Brief) -> dict:
                     "meeting_time": b.meeting_at.strftime("%H:%M") if b.meeting_at.time() != b.meeting_at.min.time() else None,
                     "identified_as": b.entity.chosen_label if b.entity else None},
         "choices": b.entity.choices if b.entity else [],
+        "warnings": b.warnings or [],
         "window": {"start": b.run.window_start.isoformat(), "end": b.run.window_end.isoformat()},
         "counts": {"found": len(b.run.sources),
                    "kept": len(b.entity.kept) if b.entity and not b.entity.needs_choice else len(b.filtered.kept),
@@ -34,20 +42,23 @@ def brief_to_dict(b: Brief) -> dict:
         "stories": [{
             "headline": s.headline, "summary": s.summary, "category": s.category,
             "date": s.date.isoformat(), "outlets": s.outlets,
-            "quote": s.quote, "quote_url": s.quote_source.source.url,
+            "quote": s.quote, "quote_url": _link(s.quote_source.source.url),
             "older_event": s.older_event,
             "quote_site": _site(s.quote_source.source.url),
-            "sources": [{"title": k.source.title, "url": k.source.url, "site": _site(k.source.url),
+            "sources": [{"title": k.source.title, "url": _link(k.source.url), "site": _site(k.source.url),
                          "date": k.published.isoformat()} for k in s.sources],
         } for s in c.stories],
         "talking_points": [{"text": p.text, "stories": p.story_numbers} for p in c.talking_points],
         "open_questions": [{"text": p.text, "stories": p.story_numbers} for p in c.open_questions],
         "ledger": {
-            "articles": [{"title": r.source.title or r.source.url, "url": r.source.url,
+            "articles": [{"title": r.source.title or r.source.url, "url": _link(r.source.url),
                           "site": _site(r.source.url), "reason": r.reason}
                          for r in b.filtered.rejected] +
-                        [{"title": k.source.title, "url": k.source.url, "site": _site(k.source.url),
-                          "reason": reason} for k, reason in (b.entity.set_aside if b.entity else [])],
+                        [{"title": k.source.title, "url": _link(k.source.url), "site": _site(k.source.url),
+                          "reason": reason} for k, reason in (b.entity.set_aside if b.entity else [])] +
+                        [{"title": k.source.title, "url": _link(k.source.url), "site": _site(k.source.url),
+                          "reason": f"not read: the AI reads at most the {MAX_ARTICLES} newest articles"}
+                         for k in (b.not_read or [])],
             "draft": [{"item": item, "reason": reason} for item, reason in c.removed],
         },
     }

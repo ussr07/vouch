@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 
 from vouch.filters import Kept
 from vouch.llm import ENTITY_MODEL, CallInfo, chat_json
+from vouch.shapes import as_int, as_ints, as_text
 
 DOMINANT_SHARE = 0.75
 SNIPPET_CHARS = 250
@@ -60,19 +61,24 @@ def decide(raw: dict, kept: list[Kept], name: str, about: str = "") -> EntityDec
     out = EntityDecision()
     by_number = {i: k for i, k in enumerate(kept, start=1)}
     groups, claimed = [], set()
-    for position, e in enumerate(raw.get("entities", []) or []):
-        ids = [i for i in e.get("article_ids", [])
-               if isinstance(i, int) and i in by_number and i not in claimed]
+    entities = raw.get("entities") if isinstance(raw, dict) else None
+    for position, e in enumerate(entities if isinstance(entities, list) else []):
+        if not isinstance(e, dict):
+            continue  # keep positions aligned with the model's list for "match"
+        ids = []
+        for i in as_ints(e.get("article_ids")):
+            if i in by_number and i not in claimed and i not in ids:
+                ids.append(i)
         claimed.update(ids)
         if ids:  # remember the model's position, so "match" still points correctly
-            groups.append({"label": str(e.get("label", "")).strip() or name,
+            groups.append({"label": as_text(e.get("label")) or name,
                            "ids": ids, "position": position})
     out.groups_found = len(groups)
     unclassified = [k for i, k in by_number.items() if i not in claimed]
 
     chosen = None
     if about:
-        match = raw.get("match")
+        match = as_int(raw.get("match")) if isinstance(raw, dict) else None
         chosen = next((g for g in groups if g["position"] == match), None)
     elif groups:
         largest = max(groups, key=lambda g: len(g["ids"]))

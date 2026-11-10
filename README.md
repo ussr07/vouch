@@ -63,6 +63,26 @@ Steps 2, 3 (the decision) and 5 are plain Python you can read in `vouch/filters.
 - Every request lists fallbacks (`gemini/gemini-3.5-flash-lite`, then `groq/qwen/qwen3.8-27b`). When the requested model fails or is rate-limited, Bifrost retries on the next one by itself. The page shows which model actually wrote the brief, read from `extra_fields.routing_info`.
 - Bifrost is configured from a plain `bifrost/config.json` that refers to keys by environment variable name, so it is safe to commit.
 
+## Reliability and safety
+
+A backend audit found 12 weak spots; each is fixed and has a test in `tests/`.
+
+| Risk | What Vouch does |
+|---|---|
+| A search result carries a `javascript:` or `data:` link | Only http(s) addresses are kept or sent to the page; all web text is inserted as text, never HTML |
+| More articles pass the filters than the model reads | The extras are listed in the ledger as "not read", so nothing is dropped silently |
+| The model returns ids as text, odd shapes or a cut-off reply | Replies are read defensively (`vouch/shapes.py`); a cut-off reply is reported, not guessed at |
+| A quote stitched from a headline's end and the text's start | Headline and text are checked separately |
+| The model's own words trigger an "older event" flag | Only the quote, which is evidence, is checked |
+| One Tavily search fails, or the entity check fails | The other searches run (in parallel); the brief continues and shows a warning |
+| A meeting date like year 0001 | Refused with a plain message instead of crashing the server |
+| A slow model keeps the page waiting | 45 s per request, one retry; Bifrost switches models on failure |
+| The page is closed mid-brief | Work stops at the next step and the server is free immediately |
+| Two briefs at once double the spend | One brief at a time; the second is told to wait |
+| Errors | Recognised by type (bad key, no credits, timeout, gateway down) with a fix for each |
+
+Every finished brief is saved (`data/vouch.db`) and has its own link, so it can be reopened later without new API calls.
+
 ## Results
 
 Measured on 10 Nov 2026 with `eval/run_eval.py` on 7 subjects, three runs. Expectations (which names are ambiguous) were written in `eval/subjects.json` **before** the first run. The code changed between runs (each fix is described below), so every run is kept: [run 1](eval/RESULTS-run1.md), [run 2](eval/RESULTS-run2.md), [run 3, current code](eval/RESULTS.md).
@@ -130,12 +150,14 @@ vouch/research.py   step 1: Tavily searches + window
 vouch/cache.py      SQLite cache for search responses
 vouch/filters.py    step 2: filter rules and rejection reasons
 vouch/entity.py     step 3: which-one decision
-vouch/llm.py        all model calls, through Bifrost, with fallback
+vouch/llm.py        all model calls, through Bifrost, with fallback and time limits
+vouch/shapes.py     reads the model's JSON defensively (odd shapes never crash a brief)
+vouch/store.py      saved briefs, reopened by id without new API calls
 vouch/draft.py      step 4: the drafting prompt
 vouch/verify.py     step 5: quote, figure and relevance checks
 vouch/pipeline.py   runs the steps and reports each stage
 app/                FastAPI server (streams stages) and the web page
-tests/              offline unit tests
+tests/              83 offline tests: logic, pipeline and server (fake Tavily and Bifrost)
 eval/               evaluation subjects, tamper test, results
 bifrost/config.json gateway configuration
 ```

@@ -96,6 +96,25 @@ class Verify(unittest.TestCase):
                  "quote": {"article_id": 1, "text": "Only one in 10 option buyers make money"}}
         self.assertEqual(len(verify({"stories": [story]}, arts).stories), 1)
 
+    def test_quote_stitched_across_headline_and_text_fails(self):
+        art = Kept(Source(url="https://a.com/x", title="Acme opens new plant",
+                          snippet="In Pune on Monday, officials confirmed the move.",
+                          published_date=None, angle="news", score=0.5), date(2026, 10, 2))
+        stitched = {"id": 1, "headline": "Acme opens plant in Pune", "summary": "s", "article_ids": [1],
+                    "quote": {"article_id": 1, "text": "opens new plant In Pune on Monday"}}
+        out = verify({"stories": [stitched]}, [art])
+        self.assertEqual(out.stories, [])
+        self.assertIn("not found word for word", out.removed[0][1])
+
+    def test_older_event_ignores_the_models_own_words(self):
+        story = {"id": 1, "headline": "Profit up", "article_ids": [1],
+                 "summary": "Founded in 1981, Infosys reported a 6% rise.",
+                 "quote": {"article_id": 1, "text": "Infosys reported a 6% rise in quarterly profit"}}
+        arts = [kept(1, text=ARTICLE_TEXT + " The company was founded in 1981.")]
+        out = verify({"stories": [story]}, arts, "Infosys", window_start=date(2026, 10, 11))
+        self.assertEqual(len(out.stories), 1)
+        self.assertIsNone(out.stories[0].older_event)
+
 
 class OlderEvent(unittest.TestCase):
     START = date(2026, 10, 11)

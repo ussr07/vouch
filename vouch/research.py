@@ -4,6 +4,7 @@ This module only COLLECTS raw results. It does not decide what is true;
 filtering and checking happen in later steps, in code we can test.
 """
 import os
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 
@@ -50,6 +51,21 @@ class SearchRun:
     sources: list[Source] = field(default_factory=list)
     credits_used: int = 0
     cache_hits: int = 0
+    failed: list[tuple[str, str]] = field(default_factory=list)  # (angle, what went wrong)
+
+
+EARLIEST_MEETING_YEAR = 2000   # news search is meaningless much earlier
+MAX_DAYS_AHEAD = 366           # a meeting over a year away gets no useful brief
+
+
+def meeting_problem(meeting_at: datetime, today: date | None = None) -> str | None:
+    """Why this meeting date can't be briefed, in plain words, or None if it's fine."""
+    today = today or date.today()
+    if meeting_at.year < EARLIEST_MEETING_YEAR:
+        return f"Pick a meeting date from {EARLIEST_MEETING_YEAR} onwards."
+    if (meeting_at.date() - today).days > MAX_DAYS_AHEAD:
+        return "Pick a meeting within the next year; news from today won't describe a meeting further away."
+    return None
 
 
 def window_for(meeting_at: datetime, today: date | None = None) -> tuple[date, date]:
@@ -63,11 +79,15 @@ def search(name: str, kind: str, meeting_at: datetime, max_results: int = 8,
            about: str = "") -> SearchRun:
     if kind not in ANGLES:
         raise ValueError(f"kind must be one of {list(ANGLES)}, got {kind!r}")
+    problem = meeting_problem(meeting_at)
+    if problem:
+        raise ValueError(problem)
     start, end = window_for(meeting_at)
     run = SearchRun(name=name, kind=kind, window_start=start, window_end=end)
     client = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
 
-    for angle, template in ANGLES[kind].items():
+    def one_angle(template: str):
+        """Returns (response, came_from_cache). Exceptions are caught by the caller."""
         params = {
             # "Mercury (startup bank) news" finds the right Mercury far more often
             "query": template.format(name=f"{name} ({about})" if about else name),
@@ -77,21 +97,41 @@ def search(name: str, kind: str, meeting_at: datetime, max_results: int = 8,
             "start_date": start.isoformat(),
             "end_date": end.isoformat(),
         }
-        response = cache.get(params)
-        if response is not None:
+        cached = cache.get(params)
+        if cached is not None:
+            return cached, True
+        response = client.search(**params)
+        cache.put(params, response)
+        return response, False
+
+    # The searches are independent, so they run at the same time (about 4x faster).
+    angles = list(ANGLES[kind].items())
+    with ThreadPoolExecutor(max_workers=len(angles)) as pool:
+        futures = [(angle, pool.submit(one_angle, template)) for angle, template in angles]
+
+    errors = []
+    for angle, future in futures:  # results kept in a fixed order, so briefs are repeatable
+        try:
+            response, from_cache = future.result()
+        except Exception as e:  # one failed search must not sink the others
+            errors.append(e)
+            run.failed.append((angle, f"{type(e).__name__}: {e}"[:160]))
+            continue
+        if from_cache:
             run.cache_hits += 1
         else:
-            response = client.search(**params)
-            cache.put(params, response)
             run.credits_used += 1
-
-        for r in response.get("results", []):
+        for r in response.get("results", []) if isinstance(response, dict) else []:
+            if not isinstance(r, dict):
+                continue
             run.sources.append(Source(
-                url=r.get("url", ""),
-                title=r.get("title", ""),
-                snippet=r.get("content", ""),
+                url=str(r.get("url") or ""),
+                title=str(r.get("title") or ""),
+                snippet=str(r.get("content") or ""),
                 published_date=r.get("published_date"),
                 angle=angle,
-                score=r.get("score", 0.0),
+                score=r.get("score") if isinstance(r.get("score"), (int, float)) else 0.0,
             ))
+    if errors and len(errors) == len(angles):
+        raise errors[0]  # every search failed: report the real cause (bad key, no credits...)
     return run

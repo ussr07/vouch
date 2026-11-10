@@ -57,5 +57,7 @@ for reason, n in Counter(r.reason for r in b.filtered.rejected).most_common():
     print(f" {n} x article: {reason}")
 for reason, n in Counter(r for _, r in (b.entity.set_aside if b.entity else [])).most_common():
     print(f" {n} x article: {reason}")
+if b.not_read:
+    print(f" {len(b.not_read)} x article: not read (past the {len(b.draft_articles or [])}-article limit)")
 for item, reason in c.removed:
     print(f" 1 x AI draft: {item!r}: {reason}")

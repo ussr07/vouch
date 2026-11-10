@@ -8,7 +8,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from email.utils import parsedate_to_datetime
-from urllib.parse import urlsplit
+from urllib.parse import parse_qsl, urlencode, urlsplit
 
 from vouch.research import SearchRun, Source
 
@@ -48,11 +48,23 @@ def parse_date(raw: str | None) -> date | None:
         return None
 
 
+def is_web_link(url: str) -> bool:
+    """Only http(s) addresses with a host. A search result could carry a
+    'javascript:' or 'data:' address, which would run code if shown as a link."""
+    parts = urlsplit((url or "").strip())
+    return parts.scheme.lower() in ("http", "https") and bool(parts.netloc)
+
+
+_TRACKING = re.compile(r"^(utm_.*|fbclid|gclid|mc_cid|mc_eid|ref|ref_src|cmp|cmpid|ocid|taid|src)$")
+
+
 def normalise_url(url: str) -> str:
-    """Treat http/https, 'www.', 'm.' and trailing slashes as the same page."""
+    """Treat http/https, 'www.', 'm.', trailing slashes and tracking tags as the
+    same page, but keep real query parameters: news.php?id=1 and ?id=2 differ."""
     parts = urlsplit(url.strip().lower())
     host = re.sub(r"^(www\.|m\.|amp\.)", "", parts.netloc)
-    return host + parts.path.rstrip("/")
+    query = sorted((k, v) for k, v in parse_qsl(parts.query) if not _TRACKING.match(k))
+    return host + parts.path.rstrip("/") + ("?" + urlencode(query) if query else "")
 
 
 def mentions(name: str, text: str) -> bool:
@@ -90,7 +102,9 @@ def filter_run(run: SearchRun) -> FilterResult:
         key = normalise_url(source.url)
         published = parse_date(source.published_date)
 
-        if host in NOT_NEWS_HOSTS:
+        if not is_web_link(source.url):
+            reason = "not a normal web address, so it can't be linked safely"
+        elif host in NOT_NEWS_HOSTS:
             reason = "not a news article (search engine's own profile page)"
         elif key in seen_urls:
             reason = "duplicate of a page already kept"

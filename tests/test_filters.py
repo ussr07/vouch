@@ -108,6 +108,31 @@ class FilterRun(unittest.TestCase):
         r = run_with(src("https://a.com/1", title="Infy wins deal", snippet="Infosys won a deal"))
         self.assertEqual(filter_run(r).kept, [])
 
+    def test_rejects_unsafe_links(self):
+        for bad in ["javascript:alert(1)", "data:text/html,<b>x</b>", "ftp://a.com/x", "//a.com/x", ""]:
+            result = filter_run(run_with(src(bad, title="Infosys wins deal")))
+            self.assertEqual(result.kept, [], bad)
+            self.assertIn("not a normal web address", result.rejected[0].reason)
+
+    def test_safe_link_check(self):
+        from vouch.filters import is_web_link
+        self.assertTrue(is_web_link("https://economictimes.com/a"))
+        self.assertTrue(is_web_link("HTTP://a.com"))
+        self.assertFalse(is_web_link("JavaScript:alert(1)"))
+
+
+
+class UrlDedupe(unittest.TestCase):
+    def test_different_ids_are_different_pages(self):
+        self.assertNotEqual(normalise_url("https://a.com/news.php?id=1"), normalise_url("https://a.com/news.php?id=2"))
+
+    def test_tracking_tags_ignored(self):
+        self.assertEqual(normalise_url("https://www.a.com/story/?utm_source=x&utm_medium=y"),
+                         normalise_url("http://a.com/story"))
+
+    def test_parameter_order_ignored(self):
+        self.assertEqual(normalise_url("https://a.com/p?b=2&a=1"), normalise_url("https://a.com/p?a=1&b=2"))
+
 
 if __name__ == "__main__":
     unittest.main()

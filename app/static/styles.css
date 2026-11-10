@@ -73,6 +73,7 @@ body {
 .choose button:hover { background: var(--pencil); }
 .choose button span { font: 400 0.88rem var(--sans); color: var(--ink-soft); white-space: nowrap; }
 .identified { color: var(--verified); }
+.brief-head .warning { color: var(--struck); border-left: 3px solid var(--struck); border-radius: 0; padding-left: 0.6rem; }
 
 .ask-actions { display: flex; align-items: center; gap: 1.25rem; margin-top: 1.75rem; flex-wrap: wrap; }
 button {
