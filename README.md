@@ -6,7 +6,7 @@ Give Vouch a company or person and a meeting date. It reads the news from the 30
 
 Built for the Geek Room Global AI Hackathon 2026, problem statement **Tavily Research Agent**, using **Tavily** for live research and **Bifrost by Maxim AI** as the model gateway.
 
-<!-- SCREENSHOT: add docs/screenshot.png here -->
+![Vouch: the sentence form, live pipeline stages, and a verified story with its quote, outlet count and date](docs/screenshot.jpg)
 
 ## Why it exists
 
@@ -23,6 +23,31 @@ AI research tools write confident summaries, and the reader has no quick way to 
 | 5. Verify | Code | Removes a story if its quote isn't found word for word in the cited article, if any figure in it doesn't appear in its sources, or if the quote shares nothing with the claim. Dates and outlet counts are computed in code. Stories whose quote dates the event before the window are flagged as older events. |
 
 The page shows each stage live as it finishes, then the brief, then **"What we left out"**: every rejected article and every AI-written line that failed a check, struck through, with the reason.
+
+![The rejection ledger: rejected articles and an AI-written claim struck through, each with its reason](docs/ledger.jpg)
+
+## Architecture
+
+```mermaid
+flowchart LR
+    user([You: name, meeting type, date and time]) --> app[FastAPI server<br/>streams each stage]
+    app --> search[1. Search<br/>4 news angles, 30-day window]
+    search <-->|search + cache| tavily[(Tavily API)]
+    search --> filter[2. Filter<br/>code rules]
+    filter --> entity[3. Which one?<br/>model sorts, code decides]
+    entity -->|several entities| ask([Ask: which one do you mean?])
+    entity --> draft[4. Draft<br/>stories, points, questions]
+    entity <-->|gpt-oss-20b| bifrost
+    draft <-->|gpt-oss-120b| bifrost{{Bifrost gateway<br/>fallbacks: Gemini, Qwen}}
+    draft --> verify[5. Verify<br/>code checks]
+    verify --> brief([Brief + rejection ledger])
+    filter -.->|rejected articles| brief
+    verify -.->|failed AI lines| brief
+    bifrost <--> groq[(Groq)]
+    bifrost <--> gemini[(Gemini)]
+```
+
+Steps 2, 3 (the decision) and 5 are plain Python you can read in `vouch/filters.py`, `vouch/entity.py` and `vouch/verify.py`. The model's output never reaches the page without passing through them.
 
 ## How Tavily is used
 
