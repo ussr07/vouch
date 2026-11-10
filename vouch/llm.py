@@ -13,9 +13,16 @@ from dataclasses import dataclass
 from openai import OpenAI
 
 BIFROST_URL = os.environ.get("BIFROST_URL", "http://localhost:8080/v1")
+
+# Right-sized models: the big model writes the brief; a small one sorts entities.
+# On Groq's free tier each model has its OWN rate limit, so splitting the two
+# calls across models avoids the 429s measured in eval/RESULTS.md.
 PRIMARY_MODEL = os.environ.get("VOUCH_PRIMARY_MODEL", "groq/openai/gpt-oss-120b")
+ENTITY_MODEL = os.environ.get("VOUCH_ENTITY_MODEL", "groq/openai/gpt-oss-20b")
+# Tried in order if the requested model fails. Different providers and models
+# have separate limits, so one of them is usually free.
 FALLBACK_MODELS = os.environ.get(
-    "VOUCH_FALLBACK_MODELS", "gemini/gemini-3.5-flash-lite").split(",")
+    "VOUCH_FALLBACK_MODELS", "gemini/gemini-3.5-flash-lite,groq/qwen/qwen3.8-27b").split(",")
 
 _client = OpenAI(base_url=BIFROST_URL, api_key="handled-by-bifrost", timeout=120)
 
@@ -42,19 +49,23 @@ def _extract_json(text: str) -> dict:
     return json.loads(text[start:end + 1])
 
 
-def chat_json(system: str, user: str, max_tokens: int = 6000) -> tuple[dict, CallInfo]:
+def chat_json(system: str, user: str, max_tokens: int = 6000,
+              model: str | None = None, reasoning: str = "low") -> tuple[dict, CallInfo]:
     """Ask for a JSON reply. Retries once if the reply isn't valid JSON."""
     last_error = None
     for _attempt in range(2):
         start = time.time()
         raw = _client.chat.completions.with_raw_response.create(
-            model=PRIMARY_MODEL,
+            model=model or PRIMARY_MODEL,
             messages=[{"role": "system", "content": system},
                       {"role": "user", "content": user}],
             max_tokens=max_tokens,
             temperature=0.2,
             response_format={"type": "json_object"},
-            extra_body={"fallbacks": FALLBACK_MODELS},
+            # gpt-oss models "think" before answering; low effort is enough for
+            # these tasks and cuts hidden tokens. Models without it ignore it.
+            extra_body={"fallbacks": [m for m in FALLBACK_MODELS if m != (model or PRIMARY_MODEL)],
+                        "reasoning_effort": reasoning},
         )
         reply = raw.parse()
         routing = (raw.http_response.json().get("extra_fields") or {}).get("routing_info") or {}

@@ -33,6 +33,8 @@ class Brief:
     about: str = ""
     entity: EntityDecision | None = None
     entity_call: CallInfo | None = None
+    draft_raw: dict | None = None          # the model's draft before checking
+    draft_articles: list | None = None     # the numbered articles it saw
 
 
 def make_brief(name: str, kind: str, meeting_at: datetime, goal: str = "general",
@@ -74,4 +76,5 @@ def make_brief(name: str, kind: str, meeting_at: datetime, goal: str = "general"
         articles, call, checked = [], None, Verified()
 
     return Brief(name, kind, goal, meeting_at, run, filtered, len(articles),
-                 checked, call, round(time.time() - start, 1), about, entity, entity_call)
+                 checked, call, round(time.time() - start, 1), about, entity, entity_call,
+                 raw if usable else None, articles)

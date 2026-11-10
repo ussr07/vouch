@@ -1,0 +1,315 @@
+{
+  "run_at": "2026-11-10T21:29:37",
+  "rows": [
+    {
+      "name": "Infosys",
+      "kind": "company",
+      "goal": "investor",
+      "expect_ambiguous": false,
+      "asked_which_one": false,
+      "entity_groups": 1,
+      "found": 32,
+      "kept_after_filters": 25,
+      "set_aside_other_entity": 0,
+      "stories_drafted": 3,
+      "stories_verified": 3,
+      "stories_removed": 0,
+      "removal_reasons": {},
+      "older_event_flags": 0,
+      "multi_outlet_stories": 3,
+      "tokens": 7158,
+      "served_by": "gemini/gemini-3.5-flash-lite",
+      "fallback_used": true,
+      "seconds": 14.2,
+      "tavily_credits": 0,
+      "tamper": {
+        "quote figure changed": [
+          3,
+          3
+        ],
+        "quote paraphrased": [
+          3,
+          3
+        ],
+        "quote cites wrong article": [
+          3,
+          3
+        ],
+        "invented figure in summary": [
+          3,
+          3
+        ],
+        "invented quote": [
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "name": "Zerodha",
+      "kind": "company",
+      "goal": "partnership",
+      "expect_ambiguous": false,
+      "asked_which_one": false,
+      "entity_groups": 2,
+      "found": 32,
+      "kept_after_filters": 19,
+      "set_aside_other_entity": 4,
+      "stories_drafted": 6,
+      "stories_verified": 5,
+      "stories_removed": 1,
+      "removal_reasons": {
+        "quote is real but doesn't back up this claim": 1
+      },
+      "older_event_flags": 0,
+      "multi_outlet_stories": 0,
+      "tokens": 6758,
+      "served_by": "groq/openai/gpt-oss-120b",
+      "fallback_used": false,
+      "seconds": 4.4,
+      "tavily_credits": 0,
+      "tamper": {
+        "quote figure changed": [
+          2,
+          2
+        ],
+        "quote paraphrased": [
+          5,
+          5
+        ],
+        "quote cites wrong article": [
+          5,
+          5
+        ],
+        "invented figure in summary": [
+          5,
+          5
+        ],
+        "invented quote": [
+          5,
+          5
+        ]
+      }
+    },
+    {
+      "name": "Razorpay",
+      "kind": "company",
+      "goal": "sales",
+      "expect_ambiguous": false,
+      "asked_which_one": false,
+      "entity_groups": 1,
+      "found": 31,
+      "kept_after_filters": 19,
+      "set_aside_other_entity": 0,
+      "stories_drafted": 2,
+      "stories_verified": 2,
+      "stories_removed": 0,
+      "removal_reasons": {},
+      "older_event_flags": 0,
+      "multi_outlet_stories": 2,
+      "tokens": 6632,
+      "served_by": "gemini/gemini-3.5-flash-lite",
+      "fallback_used": true,
+      "seconds": 13.1,
+      "tavily_credits": 0,
+      "tamper": {
+        "quote figure changed": [
+          0,
+          0
+        ],
+        "quote paraphrased": [
+          2,
+          2
+        ],
+        "quote cites wrong article": [
+          2,
+          2
+        ],
+        "invented figure in summary": [
+          2,
+          2
+        ],
+        "invented quote": [
+          2,
+          2
+        ]
+      }
+    },
+    {
+      "name": "Swiggy",
+      "kind": "company",
+      "goal": "investor",
+      "expect_ambiguous": false,
+      "asked_which_one": false,
+      "entity_groups": 1,
+      "found": 31,
+      "kept_after_filters": 23,
+      "set_aside_other_entity": 0,
+      "stories_drafted": 3,
+      "stories_verified": 3,
+      "stories_removed": 0,
+      "removal_reasons": {},
+      "older_event_flags": 0,
+      "multi_outlet_stories": 3,
+      "tokens": 6742,
+      "served_by": "gemini/gemini-3.5-flash-lite",
+      "fallback_used": true,
+      "seconds": 3.6,
+      "tavily_credits": 0,
+      "tamper": {
+        "quote figure changed": [
+          2,
+          2
+        ],
+        "quote paraphrased": [
+          3,
+          3
+        ],
+        "quote cites wrong article": [
+          3,
+          3
+        ],
+        "invented figure in summary": [
+          3,
+          3
+        ],
+        "invented quote": [
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "name": "Nandan Nilekani",
+      "kind": "person",
+      "goal": "general",
+      "expect_ambiguous": false,
+      "asked_which_one": false,
+      "entity_groups": 1,
+      "found": 22,
+      "kept_after_filters": 17,
+      "set_aside_other_entity": 0,
+      "stories_drafted": 2,
+      "stories_verified": 2,
+      "stories_removed": 0,
+      "removal_reasons": {},
+      "older_event_flags": 0,
+      "multi_outlet_stories": 2,
+      "tokens": 4600,
+      "served_by": "gemini/gemini-3.5-flash-lite",
+      "fallback_used": true,
+      "seconds": 5.4,
+      "tavily_credits": 0,
+      "tamper": {
+        "quote figure changed": [
+          0,
+          0
+        ],
+        "quote paraphrased": [
+          2,
+          2
+        ],
+        "quote cites wrong article": [
+          2,
+          2
+        ],
+        "invented figure in summary": [
+          2,
+          2
+        ],
+        "invented quote": [
+          2,
+          2
+        ]
+      }
+    },
+    {
+      "name": "Mercury",
+      "kind": "company",
+      "goal": "sales",
+      "expect_ambiguous": true,
+      "asked_which_one": true,
+      "entity_groups": 7,
+      "found": 26,
+      "kept_after_filters": 16,
+      "set_aside_other_entity": 0,
+      "stories_drafted": 0,
+      "stories_verified": 0,
+      "stories_removed": 0,
+      "removal_reasons": {},
+      "older_event_flags": 0,
+      "multi_outlet_stories": 0,
+      "tokens": 2270,
+      "served_by": null,
+      "fallback_used": true,
+      "seconds": 3.3,
+      "tavily_credits": 0
+    },
+    {
+      "name": "Apollo",
+      "kind": "company",
+      "goal": "partnership",
+      "expect_ambiguous": true,
+      "asked_which_one": false,
+      "entity_groups": 3,
+      "found": 32,
+      "kept_after_filters": 26,
+      "set_aside_other_entity": 9,
+      "stories_drafted": 4,
+      "stories_verified": 4,
+      "stories_removed": 0,
+      "removal_reasons": {},
+      "older_event_flags": 0,
+      "multi_outlet_stories": 3,
+      "tokens": 6832,
+      "served_by": "gemini/gemini-3.5-flash-lite",
+      "fallback_used": true,
+      "seconds": 12.7,
+      "tavily_credits": 0,
+      "tamper": {
+        "quote figure changed": [
+          1,
+          1
+        ],
+        "quote paraphrased": [
+          4,
+          4
+        ],
+        "quote cites wrong article": [
+          4,
+          4
+        ],
+        "invented figure in summary": [
+          4,
+          4
+        ],
+        "invented quote": [
+          4,
+          4
+        ]
+      }
+    }
+  ],
+  "tamper": {
+    "quote figure changed": [
+      8,
+      8
+    ],
+    "quote paraphrased": [
+      19,
+      19
+    ],
+    "quote cites wrong article": [
+      19,
+      19
+    ],
+    "invented figure in summary": [
+      19,
+      19
+    ],
+    "invented quote": [
+      19,
+      19
+    ]
+  }
+}

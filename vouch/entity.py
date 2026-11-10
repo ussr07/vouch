@@ -11,7 +11,7 @@ Every article set aside goes into the ledger with the entity it was about.
 from dataclasses import dataclass, field
 
 from vouch.filters import Kept
-from vouch.llm import CallInfo, chat_json
+from vouch.llm import ENTITY_MODEL, CallInfo, chat_json
 
 DOMINANT_SHARE = 0.75
 SNIPPET_CHARS = 250
@@ -92,5 +92,6 @@ def decide(raw: dict, kept: list[Kept], name: str, about: str = "") -> EntityDec
 
 
 def resolve(name: str, kind: str, about: str, kept: list[Kept]) -> tuple[EntityDecision, CallInfo]:
-    raw, info = chat_json(SYSTEM, build_prompt(name, kind, about, kept), max_tokens=3000)
+    raw, info = chat_json(SYSTEM, build_prompt(name, kind, about, kept), max_tokens=3000,
+                          model=ENTITY_MODEL)
     return decide(raw, kept, name, about), info

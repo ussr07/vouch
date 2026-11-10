@@ -1,0 +1,13 @@
+{
+  "note": "Expectations written BEFORE the first run. Do not edit after seeing results.",
+  "meeting_date": "2026-11-14",
+  "subjects": [
+    {"name": "Infosys",          "kind": "company", "goal": "investor",    "expect_ambiguous": false},
+    {"name": "Zerodha",          "kind": "company", "goal": "partnership", "expect_ambiguous": false},
+    {"name": "Razorpay",         "kind": "company", "goal": "sales",       "expect_ambiguous": false},
+    {"name": "Swiggy",           "kind": "company", "goal": "investor",    "expect_ambiguous": false},
+    {"name": "Nandan Nilekani",  "kind": "person",  "goal": "general",     "expect_ambiguous": false},
+    {"name": "Mercury",          "kind": "company", "goal": "sales",       "expect_ambiguous": true},
+    {"name": "Apollo",           "kind": "company", "goal": "partnership", "expect_ambiguous": true}
+  ]
+}
