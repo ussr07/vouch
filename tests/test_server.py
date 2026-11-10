@@ -181,5 +181,20 @@ class GatewayUsage(unittest.TestCase):
         self.assertAlmostEqual(body["spend_usd"], 0.003045, places=5)
 
 
+
+class ChallengeBrief(unittest.TestCase):
+    """Items named in the official problem statement (PDF, Problem Statement 05)."""
+
+    def test_business_development_is_a_meeting_type(self):
+        with mock.patch.object(server, "make_brief", side_effect=fake_brief):
+            got = events(TestClient(server.app).get("/api/brief", params={**GOOD, "goal": "bizdev"}))
+        self.assertEqual(got[-1][0], "brief")
+
+    def test_the_form_offers_every_meeting_type_the_server_accepts(self):
+        page = TestClient(server.app).get("/").text
+        for goal in server.GOALS:
+            self.assertIn(f'value="{goal}"', page, goal)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,5 +1,5 @@
 {
-  "run_at": "2026-11-10T21:37:00",
+  "run_at": "2026-11-10T22:35:04",
   "rows": [
     {
       "name": "Infosys",
@@ -9,39 +9,39 @@
       "asked_which_one": false,
       "entity_groups": 1,
       "found": 32,
-      "kept_after_filters": 25,
+      "kept_after_filters": 24,
       "set_aside_other_entity": 0,
-      "stories_drafted": 6,
-      "stories_verified": 6,
+      "stories_drafted": 5,
+      "stories_verified": 5,
       "stories_removed": 0,
       "removal_reasons": {},
-      "older_event_flags": 0,
+      "older_event_flags": 1,
       "multi_outlet_stories": 3,
-      "tokens": 7650,
+      "tokens": 7476,
       "served_by": "groq/openai/gpt-oss-120b",
       "fallback_used": false,
-      "seconds": 6.1,
-      "tavily_credits": 0,
+      "seconds": 9.2,
+      "tavily_credits": 4,
       "tamper": {
         "quote figure changed": [
-          3,
-          3
+          4,
+          4
         ],
         "quote paraphrased": [
-          6,
-          6
+          5,
+          5
         ],
         "quote cites wrong article": [
-          6,
-          6
+          5,
+          5
         ],
         "invented figure in summary": [
-          6,
-          6
+          5,
+          5
         ],
         "invented quote": [
-          6,
-          6
+          5,
+          5
         ]
       }
     },
@@ -55,16 +55,16 @@
       "found": 32,
       "kept_after_filters": 19,
       "set_aside_other_entity": 0,
-      "stories_drafted": 6,
-      "stories_verified": 6,
+      "stories_drafted": 5,
+      "stories_verified": 5,
       "stories_removed": 0,
       "removal_reasons": {},
       "older_event_flags": 0,
-      "multi_outlet_stories": 3,
-      "tokens": 9587,
-      "served_by": "groq/qwen/qwen3.8-27b",
-      "fallback_used": true,
-      "seconds": 9.7,
+      "multi_outlet_stories": 1,
+      "tokens": 7432,
+      "served_by": "groq/openai/gpt-oss-120b",
+      "fallback_used": false,
+      "seconds": 31.3,
       "tavily_credits": 0,
       "tamper": {
         "quote figure changed": [
@@ -72,20 +72,20 @@
           3
         ],
         "quote paraphrased": [
-          6,
-          6
+          5,
+          5
         ],
         "quote cites wrong article": [
-          6,
-          6
+          5,
+          5
         ],
         "invented figure in summary": [
-          6,
-          6
+          5,
+          5
         ],
         "invented quote": [
-          6,
-          6
+          5,
+          5
         ]
       }
     },
@@ -96,40 +96,42 @@
       "expect_ambiguous": false,
       "asked_which_one": false,
       "entity_groups": 1,
-      "found": 31,
-      "kept_after_filters": 19,
+      "found": 30,
+      "kept_after_filters": 17,
       "set_aside_other_entity": 0,
       "stories_drafted": 2,
-      "stories_verified": 2,
-      "stories_removed": 0,
-      "removal_reasons": {},
+      "stories_verified": 1,
+      "stories_removed": 1,
+      "removal_reasons": {
+        "quote is real but doesn't back up this claim": 1
+      },
       "older_event_flags": 0,
-      "multi_outlet_stories": 2,
-      "tokens": 6643,
+      "multi_outlet_stories": 1,
+      "tokens": 5868,
       "served_by": "gemini/gemini-3.5-flash-lite",
       "fallback_used": true,
-      "seconds": 5.8,
-      "tavily_credits": 0,
+      "seconds": 4.9,
+      "tavily_credits": 4,
       "tamper": {
         "quote figure changed": [
           0,
           0
         ],
         "quote paraphrased": [
-          2,
-          2
+          1,
+          1
         ],
         "quote cites wrong article": [
-          2,
-          2
+          1,
+          1
         ],
         "invented figure in summary": [
-          2,
-          2
+          1,
+          1
         ],
         "invented quote": [
-          2,
-          2
+          1,
+          1
         ]
       }
     },
@@ -140,42 +142,40 @@
       "expect_ambiguous": false,
       "asked_which_one": false,
       "entity_groups": 1,
-      "found": 31,
-      "kept_after_filters": 23,
+      "found": 18,
+      "kept_after_filters": 10,
       "set_aside_other_entity": 0,
-      "stories_drafted": 5,
-      "stories_verified": 4,
-      "stories_removed": 1,
-      "removal_reasons": {
-        "quote is real but doesn't back up this claim": 1
-      },
+      "stories_drafted": 2,
+      "stories_verified": 2,
+      "stories_removed": 0,
+      "removal_reasons": {},
       "older_event_flags": 0,
-      "multi_outlet_stories": 0,
-      "tokens": 7433,
-      "served_by": "groq/openai/gpt-oss-120b",
-      "fallback_used": false,
-      "seconds": 11.4,
-      "tavily_credits": 0,
+      "multi_outlet_stories": 1,
+      "tokens": 4223,
+      "served_by": "gemini/gemini-3.5-flash-lite",
+      "fallback_used": true,
+      "seconds": 7.3,
+      "tavily_credits": 4,
       "tamper": {
         "quote figure changed": [
           2,
           2
         ],
         "quote paraphrased": [
-          4,
-          4
+          2,
+          2
         ],
         "quote cites wrong article": [
-          4,
-          4
+          2,
+          2
         ],
         "invented figure in summary": [
-          4,
-          4
+          2,
+          2
         ],
         "invented quote": [
-          4,
-          4
+          2,
+          2
         ]
       }
     },
@@ -186,40 +186,42 @@
       "expect_ambiguous": false,
       "asked_which_one": false,
       "entity_groups": 1,
-      "found": 22,
-      "kept_after_filters": 17,
+      "found": 18,
+      "kept_after_filters": 13,
       "set_aside_other_entity": 0,
-      "stories_drafted": 2,
-      "stories_verified": 2,
-      "stories_removed": 0,
-      "removal_reasons": {},
-      "older_event_flags": 0,
-      "multi_outlet_stories": 2,
-      "tokens": 4713,
-      "served_by": "gemini/gemini-3.5-flash-lite",
-      "fallback_used": true,
-      "seconds": 3.4,
-      "tavily_credits": 0,
+      "stories_drafted": 5,
+      "stories_verified": 4,
+      "stories_removed": 1,
+      "removal_reasons": {
+        "quote is real but doesn't back up this claim": 1
+      },
+      "older_event_flags": 1,
+      "multi_outlet_stories": 1,
+      "tokens": 4790,
+      "served_by": "groq/openai/gpt-oss-120b",
+      "fallback_used": false,
+      "seconds": 6.2,
+      "tavily_credits": 3,
       "tamper": {
         "quote figure changed": [
-          0,
-          0
+          2,
+          2
         ],
         "quote paraphrased": [
-          2,
-          2
+          4,
+          4
         ],
         "quote cites wrong article": [
-          2,
-          2
+          4,
+          4
         ],
         "invented figure in summary": [
-          2,
-          2
+          4,
+          4
         ],
         "invented quote": [
-          2,
-          2
+          4,
+          4
         ]
       }
     },
@@ -229,9 +231,9 @@
       "goal": "sales",
       "expect_ambiguous": true,
       "asked_which_one": true,
-      "entity_groups": 7,
-      "found": 26,
-      "kept_after_filters": 16,
+      "entity_groups": 5,
+      "found": 32,
+      "kept_after_filters": 18,
       "set_aside_other_entity": 0,
       "stories_drafted": 0,
       "stories_verified": 0,
@@ -239,11 +241,11 @@
       "removal_reasons": {},
       "older_event_flags": 0,
       "multi_outlet_stories": 0,
-      "tokens": 1687,
+      "tokens": 2226,
       "served_by": null,
-      "fallback_used": true,
-      "seconds": 2.0,
-      "tavily_credits": 0
+      "fallback_used": false,
+      "seconds": 3.5,
+      "tavily_credits": 4
     },
     {
       "name": "Apollo",
@@ -251,65 +253,67 @@
       "goal": "partnership",
       "expect_ambiguous": true,
       "asked_which_one": false,
-      "entity_groups": 5,
+      "entity_groups": 3,
       "found": 32,
       "kept_after_filters": 26,
-      "set_aside_other_entity": 5,
+      "set_aside_other_entity": 7,
       "stories_drafted": 6,
-      "stories_verified": 6,
-      "stories_removed": 0,
-      "removal_reasons": {},
-      "older_event_flags": 1,
-      "multi_outlet_stories": 3,
-      "tokens": 7931,
-      "served_by": "groq/openai/gpt-oss-120b",
+      "stories_verified": 5,
+      "stories_removed": 1,
+      "removal_reasons": {
+        "quote not found word for word in the cited article": 1
+      },
+      "older_event_flags": 0,
+      "multi_outlet_stories": 5,
+      "tokens": 9827,
+      "served_by": "groq/qwen/qwen3.8-27b",
       "fallback_used": true,
-      "seconds": 38.2,
-      "tavily_credits": 0,
+      "seconds": 14.8,
+      "tavily_credits": 4,
       "tamper": {
         "quote figure changed": [
-          4,
-          4
+          2,
+          2
         ],
         "quote paraphrased": [
-          6,
-          6
+          5,
+          5
         ],
         "quote cites wrong article": [
-          6,
-          6
+          5,
+          5
         ],
         "invented figure in summary": [
-          6,
-          6
+          5,
+          5
         ],
         "invented quote": [
-          6,
-          6
+          5,
+          5
         ]
       }
     }
   ],
   "tamper": {
     "quote figure changed": [
-      12,
-      12
+      13,
+      13
     ],
     "quote paraphrased": [
-      26,
-      26
+      22,
+      22
     ],
     "quote cites wrong article": [
-      26,
-      26
+      22,
+      22
     ],
     "invented figure in summary": [
-      26,
-      26
+      22,
+      22
     ],
     "invented quote": [
-      26,
-      26
+      22,
+      22
     ]
   }
 }

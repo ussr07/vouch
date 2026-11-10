@@ -16,7 +16,7 @@ AI research tools write confident summaries, and the reader has no quick way to 
 
 | Step | Who does it | What happens |
 |---|---|---|
-| 1. Search | Tavily | Four targeted news searches (news, launches, people moves, deals) over the 30 days before the meeting, capped at today. Results are cached so reruns cost no credits. |
+| 1. Search | Tavily | Four targeted news searches (news, launches, people moves, deals) over the 30 days preceding the meeting (ending today if the meeting is still ahead, since later news doesn't exist yet). Results are cached so reruns cost no credits. |
 | 2. Filter | Code | Drops non-news pages, duplicates, undated or out-of-window articles, and articles that don't name the subject in the headline. |
 | 3. Which one? | Model sorts, code decides | The model groups articles by real-world entity. If one entity has 75%+ of articles it is kept; otherwise Vouch stops and asks the user which one they mean (it found 7 different "Mercury"s in one search). |
 | 4. Draft | Model, via Bifrost | Groups articles into stories and writes talking points and questions for the meeting type (investor, sales, partnership, hiring, general). It must cite article numbers and copy one exact supporting quote per story. |
@@ -87,15 +87,15 @@ Every finished brief is saved (`data/vouch.db`) and has its own link, so it can 
 
 ## Results
 
-Measured on 10 Nov 2026 with `eval/run_eval.py` on 7 subjects, three runs. Expectations (which names are ambiguous) were written in `eval/subjects.json` **before** the first run. The code changed between runs (each fix is described below), so every run is kept: [run 1](eval/RESULTS-run1.md), [run 2](eval/RESULTS-run2.md), [run 3, current code](eval/RESULTS.md).
+Measured on 10 Nov 2026 with `eval/run_eval.py` on 7 subjects, four runs. Expectations (which names are ambiguous) were written in `eval/subjects.json` **before** the first run. The code changed between runs (each fix is described below), so every run is kept: [run 1](eval/RESULTS-run1.md), [run 2](eval/RESULTS-run2.md), [run 3](eval/RESULTS-run3.md), [run 4, current code](eval/RESULTS.md).
 
-| Measure | Run 1 | Run 2 | Run 3 | Total |
-|---|---|---|---|---|
-| Tamper test: verified stories corrupted on purpose and re-checked | 123 of 123 caught | 84 of 84 | 116 of 116 | **323 of 323** |
-| AI-written stories removed by the code checks | 4 of 32 | 1 of 20 | 1 of 27 | **6 of 79 (8%)** |
-| Ambiguous names handled as expected | 6 of 7 | 6 of 7 | 6 of 7 | Same miss each time (below) |
-| Time per brief | 11 to 63 s | 3 to 14 s | 2 to 38 s | |
-| Errors | 0 | 0 | 0 | **0 of 21 briefs** |
+| Measure | Run 1 | Run 2 | Run 3 | Run 4 | Total |
+|---|---|---|---|---|---|
+| Tamper test: verified stories corrupted on purpose and re-checked | 123 of 123 caught | 84 of 84 | 116 of 116 | 101 of 101 | **424 of 424** |
+| AI-written stories removed by the code checks | 4 of 32 | 1 of 20 | 1 of 27 | 3 of 25 | **9 of 104 (9%)** |
+| Ambiguous names handled as expected | 6 of 7 | 6 of 7 | 6 of 7 | 6 of 7 | Same miss each time (below) |
+| Time per brief | 11 to 63 s | 3 to 14 s | 2 to 38 s | 3 to 31 s | |
+| Errors | 0 | 0 | 0 | 0 | **0 of 28 briefs** |
 
 The tamper test changes one thing at a time in a story that passed: a figure in the quote, the quote's word order, the article it cites, an invented figure in the summary, or a wholly invented quote. "AI-written stories removed" counts claims the model drafted that could not be backed up; a reader would otherwise have taken them as fact.
 
@@ -103,9 +103,10 @@ The tamper test changes one thing at a time in a story that passed: a figure in 
 
 **What changed between runs.**
 - Run 1 to 2: both model calls went to the same Groq model, whose free tier limits tokens per minute per model, so requests waited on HTTP 429s. The simple entity-sorting job moved to the smaller `gpt-oss-20b` (its own limit), and reasoning models were asked for low effort. A draft went from about 7,500 to 5,700 tokens and 10 s to 4 s.
+- Run 3 to 4: checked against the official problem statement. The 30-day window now starts 30 days before the *meeting* (it had started 30 days before today, letting a few older days in); "business development" became a meeting type; each story is labelled single-source or with its outlet count, with a key explaining verified, single-source and older-event; and the backend audit fixes (see Reliability and safety) went in.
 - Run 2 to 3: the entity step sometimes grouped articles by topic, so "Angel One overtakes Zerodha" was set aside as "a different Zerodha". Its instructions now ask *which* entity an article refers to, at temperature 0; articles it forgets to assign are kept when only one entity exists. The figure check now reads number words ("one in 10" matches "1 in 10").
 
-**Bifrost in practice.** By runs 2 and 3, a day of testing had used up much of Groq's free allowance. Bifrost moved those briefs to Gemini, and once to the second fallback (`qwen3.8-27b` on Groq), with no errors and no code change. A model we tried (`llama-3.1-8b-instant`) had been retired by Groq; every call to it fell back and still returned correct results. The cost is quality: Gemini drafted fewer stories (2 to 4 per brief instead of up to 6), and rate-limit waits explain the 38 s worst case in run 3.
+**Bifrost in practice.** By runs 2 and 3, a day of testing had used up much of Groq's free allowance. Bifrost moved those briefs to Gemini, and in runs 3 and 4 to the second fallback (`qwen3.8-27b` on Groq), with no errors and no code change. A model we tried (`llama-3.1-8b-instant`) had been retired by Groq; every call to it fell back and still returned correct results. The cost is quality: Gemini drafted fewer stories (2 to 4 per brief instead of up to 6), and rate-limit waits explain the 30 to 38 s worst cases.
 
 **What these numbers do not show.** The subjects are well-covered companies and one person, one brief each per run. The tamper test uses corruptions we designed, so it proves the checks work as specified, not that they catch every kind of mistake. Nobody has hand-graded whether each summary's interpretation is right.
 

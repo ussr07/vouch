@@ -15,6 +15,7 @@ GOALS = {
     "sales": "a sales conversation: find needs, priorities and timing",
     "investor": "an investor conversation: momentum, risks, financial signals",
     "partnership": "a partnership conversation: strategic fit and recent bets",
+    "bizdev": "a business development conversation: growth plans, new markets and openings to work together",
     "hiring": "a hiring or job conversation: team changes, culture, direction",
     "general": "a general introductory meeting",
 }

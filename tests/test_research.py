@@ -9,22 +9,27 @@ TODAY = date(2026, 11, 10)
 
 class MeetingDate(unittest.TestCase):
     def test_normal_dates_are_fine(self):
-        for d in ["2026-11-14T10:30", "2026-01-05", "2027-11-01"]:
+        for d in ["2026-11-14T10:30", "2026-01-05", "2026-12-09"]:
             self.assertIsNone(meeting_problem(datetime.fromisoformat(d), TODAY), d)
 
     def test_year_one_is_refused_not_crashed(self):
         self.assertIn("from 2000", meeting_problem(datetime(1, 1, 5), TODAY))
 
-    def test_far_future_refused(self):
-        self.assertIn("within the next year", meeting_problem(datetime(2030, 1, 1), TODAY))
+    def test_meeting_30_or_more_days_ahead_refused(self):
+        self.assertIn("30 or more days away", meeting_problem(datetime(2026, 12, 10), TODAY))
+        self.assertIn("30 or more days away", meeting_problem(datetime(2030, 1, 1), TODAY))
 
     def test_timezone_in_input_is_fine(self):
         self.assertIsNone(meeting_problem(datetime.fromisoformat("2026-11-14T10:30+05:30"), TODAY))
 
 
 class Window(unittest.TestCase):
-    def test_future_meeting_window_ends_today(self):
-        self.assertEqual(window_for(datetime(2026, 11, 14), TODAY), (date(2026, 10, 11), TODAY))
+    def test_future_meeting_window_starts_30_days_before_the_meeting(self):
+        # Meeting on 14 Nov, briefed on 10 Nov: 15 Oct to 10 Nov (later news doesn't exist yet).
+        self.assertEqual(window_for(datetime(2026, 11, 14), TODAY), (date(2026, 10, 15), TODAY))
+
+    def test_meeting_today_is_exactly_30_days(self):
+        self.assertEqual(window_for(datetime(2026, 11, 10, 15, 0), TODAY), (date(2026, 10, 11), TODAY))
 
     def test_past_meeting_window_ends_on_the_meeting(self):
         self.assertEqual(window_for(datetime(2026, 9, 30), TODAY), (date(2026, 8, 31), date(2026, 9, 30)))

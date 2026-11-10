@@ -55,7 +55,6 @@ class SearchRun:
 
 
 EARLIEST_MEETING_YEAR = 2000   # news search is meaningless much earlier
-MAX_DAYS_AHEAD = 366           # a meeting over a year away gets no useful brief
 
 
 def meeting_problem(meeting_at: datetime, today: date | None = None) -> str | None:
@@ -63,16 +62,21 @@ def meeting_problem(meeting_at: datetime, today: date | None = None) -> str | No
     today = today or date.today()
     if meeting_at.year < EARLIEST_MEETING_YEAR:
         return f"Pick a meeting date from {EARLIEST_MEETING_YEAR} onwards."
-    if (meeting_at.date() - today).days > MAX_DAYS_AHEAD:
-        return "Pick a meeting within the next year; news from today won't describe a meeting further away."
+    if (meeting_at.date() - today).days >= WINDOW_DAYS:
+        return (f"That meeting is {WINDOW_DAYS} or more days away, so none of the {WINDOW_DAYS} days "
+                f"before it have happened yet. Make the brief within {WINDOW_DAYS} days of the meeting.")
     return None
 
 
 def window_for(meeting_at: datetime, today: date | None = None) -> tuple[date, date]:
-    """The 30 days before the meeting. The end can't be in the future."""
+    """The 30 days preceding the meeting, as the challenge brief specifies.
+
+    Starts 30 days before the MEETING (not before today), and ends at the meeting,
+    or today if the meeting is still ahead, because later news doesn't exist yet.
+    """
     today = today or date.today()
-    end = min(meeting_at.date(), today)
-    return end - timedelta(days=WINDOW_DAYS), end
+    start = meeting_at.date() - timedelta(days=WINDOW_DAYS)
+    return start, min(meeting_at.date(), today)
 
 
 def search(name: str, kind: str, meeting_at: datetime, max_results: int = 8,

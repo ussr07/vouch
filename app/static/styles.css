@@ -129,6 +129,8 @@ button:disabled { background: #7C879A; cursor: progress; }
 
 .margin { font-size: 0.88rem; color: var(--ink-soft); display: grid; gap: 0.2rem; align-content: start; }
 .margin .older { color: var(--struck); }
+.margin .single { color: var(--ink); font-weight: 500; }
+.brief-head .key { margin-top: 0.9rem; max-width: 46em; font-size: 0.92rem; line-height: 1.55; }
 .margin .check { color: var(--verified); font-weight: 500; }
 
 .points { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.6rem; font: 400 1.05rem/1.6 var(--serif); max-width: 42em; }
@@ -173,7 +175,7 @@ button:disabled { background: #7C879A; cursor: progress; }
   html { font-size: 8.5pt; }   /* scales every rem-based size on the page */
   body { background: #fff; }
   .page { padding: 0; max-width: none; }
-  .masthead, .ask, .progress, .empty, .ledger, .print-btn, .sources, .machine { display: none !important; }
+  .masthead, .ask, .progress, .empty, .ledger, .print-btn, .sources, .machine, .key { display: none !important; }
   .result { border: 0; padding: 0; }
   .brief-head h2 { font-size: 16pt; }
   .part { margin-top: 10pt; }

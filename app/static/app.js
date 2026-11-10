@@ -20,6 +20,8 @@ function h(tag, props = {}, ...children) {
 const fmtDate = (iso) =>
   new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+const GOAL_LABEL = { investor: "Investor", sales: "Sales", partnership: "Partnership",
+                     bizdev: "Business development", hiring: "Hiring", general: "General" };
 
 // Default the meeting to tomorrow at 10:00, in the user's own time zone.
 const tomorrow = new Date(Date.now() + 86400000);
@@ -86,7 +88,9 @@ function storyRow(s, i) {
     h("div", { class: "margin" },
       h("span", { text: `Reported ${fmtDate(s.date)}` }),
       s.older_event ? h("span", { class: "older", text: `Older event: ${s.older_event}` }) : null,
-      h("span", { text: plural(s.outlets.length, "outlet") }),
+      s.outlets.length > 1
+        ? h("span", { text: `Reported by ${s.outlets.length} outlets` })
+        : h("span", { class: "single", text: "Single source" }),
       h("span", { class: "check", text: "✓ Quote verified" })));
 }
 
@@ -151,13 +155,18 @@ function renderBrief(b) {
     h("h2", { id: "result-title", text: b.subject.name }),
     b.subject.identified_as ? h("p", { class: "identified", text: `Identified as ${b.subject.identified_as}` }) : null,
     (b.warnings || []).map((w) => h("p", { class: "warning", role: "note", text: w })),
-    h("p", { text: `${b.subject.goal[0].toUpperCase() + b.subject.goal.slice(1)} meeting on ${fmtDate(b.subject.meeting)}` +
+    h("p", { text: `${GOAL_LABEL[b.subject.goal] || "General"} meeting on ${fmtDate(b.subject.meeting)}` +
                    (b.subject.meeting_time ? ` at ${b.subject.meeting_time}` : "") + ". " +
                    `News from ${fmtDate(b.window.start)} to ${fmtDate(b.window.end)}.` }),
     h("p", { class: "funnel" },
       h("strong", { text: c.found }), " articles found, ",
       h("strong", { text: c.kept }), " kept, ",
-      h("strong", { text: c.verified }), ` ${c.verified === 1 ? "story" : "stories"} verified.`)));
+      h("strong", { text: c.verified }), ` ${c.verified === 1 ? "story" : "stories"} verified.`),
+    c.verified ? h("p", { class: "key", text:
+      "How to read this: every quote below was found word for word in its article. " +
+      "\u201cSingle source\u201d means only one outlet reported it, so weigh it with more care; " +
+      "\u201cOlder event\u201d means the news is recent but the event isn't. " +
+      "Claims that failed a check are listed under What we left out." }) : null));
 
   if (!b.stories.length) {
     r.append(h("section", { class: "part" },
