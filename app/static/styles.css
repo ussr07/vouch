@@ -1,0 +1,144 @@
+:root {
+  --paper: #F3F5F8;
+  --sheet: #FFFFFF;
+  --ink: #14213D;
+  --ink-soft: #4A5568;
+  --rule: #D5DCE6;
+  --verified: #0F7B6C;
+  --struck: #B4233C;
+  --pencil: #DCEBF5;
+  --focus: #2B59C3;
+  --serif: "Spectral", Georgia, serif;
+  --sans: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 1rem/1.55 var(--sans);
+}
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.page { max-width: 64rem; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+
+.masthead { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+.wordmark { margin: 0; font-weight: 700; font-size: 1.5rem; letter-spacing: -0.02em; }
+.tagline { margin: 0; color: var(--ink-soft); }
+
+/* The question as a sentence: the first thing anyone sees. */
+.ask { margin: 3.5rem 0 2rem; }
+.sentence {
+  margin: 0;
+  font: 400 clamp(1.6rem, 3.6vw, 2.6rem)/1.5 var(--serif);
+  max-width: 30em;
+}
+.field input, .field select {
+  font: inherit; color: var(--ink);
+  background: transparent;
+  border: 0; border-bottom: 2px solid var(--ink);
+  padding: 0 0.15em; border-radius: 0;
+  -webkit-appearance: none; appearance: none;
+}
+.field select {
+  cursor: pointer; padding-right: 0.9em;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2314213D' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 0.1em center / 0.4em auto;
+}
+.field-name input { width: 7.5em; }
+.field input[type="date"] { width: 7.6em; }
+.field input::placeholder { color: #9AA5B4; }
+.field input:focus, .field select:focus { outline: none; border-bottom-color: var(--focus); background: var(--pencil); }
+
+.ask-actions { display: flex; align-items: center; gap: 1.25rem; margin-top: 1.75rem; flex-wrap: wrap; }
+button {
+  font: 500 1rem var(--sans); color: #fff; background: var(--ink);
+  border: 0; border-radius: 6px; padding: 0.75rem 1.4rem; cursor: pointer;
+}
+button:hover { background: #22325A; }
+button:disabled { background: #7C879A; cursor: progress; }
+.form-error { margin: 0; color: var(--struck); }
+
+.empty { max-width: 36rem; color: var(--ink-soft); }
+.empty p { margin: 0; }
+
+/* Live pipeline stages */
+.progress { list-style: none; margin: 0 0 2rem; padding: 0; display: grid; gap: 0.35rem; color: var(--ink-soft); }
+.progress li { display: flex; gap: 0.6rem; align-items: baseline; }
+.progress .mark { width: 1.1rem; flex: none; text-align: center; }
+.progress li.done .mark { color: var(--verified); }
+.progress li.running .mark::before { content: ""; display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--ink-soft); animation: pulse 1s ease-in-out infinite; }
+.progress li.failed { color: var(--struck); }
+@keyframes pulse { 50% { opacity: 0.25; } }
+
+/* The brief: a sheet with a margin for proof marks */
+.result { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 2.25rem clamp(1.25rem, 4vw, 3rem) 2.5rem; }
+.brief-head h2 { margin: 0; font: 500 1.9rem/1.2 var(--serif); }
+.brief-head p { margin: 0.4rem 0 0; color: var(--ink-soft); }
+.funnel { margin: 1.25rem 0 0; color: var(--ink-soft); font-size: 0.95rem; }
+.funnel strong { color: var(--ink); font-weight: 500; }
+
+.part { margin-top: 2.75rem; }
+.part > h3 { margin: 0 0 1rem; font: 500 1.05rem var(--sans); }
+
+.row {
+  display: grid; grid-template-columns: minmax(0, 1fr) 11rem; gap: 2rem;
+  padding: 1.25rem 0; border-top: 1px solid var(--rule);
+}
+.row:first-of-type { border-top: 0; padding-top: 0; }
+.story h4 { margin: 0; font: 500 1.3rem/1.3 var(--serif); }
+.story h4 .num { color: var(--ink-soft); margin-right: 0.4em; }
+.story .summary { margin: 0.4rem 0 0; font: 400 1.08rem/1.65 var(--serif); max-width: 40em; }
+.quote {
+  margin: 0.9rem 0 0; padding: 0.15rem 0 0.15rem 0.9rem;
+  border-left: 3px solid var(--verified);
+  font: italic 400 1.02rem/1.6 var(--serif);
+}
+.quote mark { background: var(--pencil); color: inherit; padding: 0.05em 0.1em; }
+.quote cite { display: block; margin-top: 0.3rem; font: 400 0.88rem var(--sans); font-style: normal; color: var(--ink-soft); }
+.quote cite a, .sources a { color: inherit; }
+.sources { margin-top: 0.6rem; font-size: 0.9rem; color: var(--ink-soft); }
+.sources summary { cursor: pointer; width: fit-content; }
+.sources ul { margin: 0.5rem 0 0; padding-left: 1.1rem; }
+.sources li { margin: 0.15rem 0; }
+
+.margin { font-size: 0.88rem; color: var(--ink-soft); display: grid; gap: 0.2rem; align-content: start; }
+.margin .check { color: var(--verified); font-weight: 500; }
+
+.points { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.6rem; font: 400 1.05rem/1.6 var(--serif); max-width: 42em; }
+.points .ref { font: 400 0.85rem var(--sans); color: var(--ink-soft); margin-left: 0.35em; white-space: nowrap; }
+.points .ref a { color: inherit; }
+.two-up { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+.two-up .part { margin-top: 2.75rem; }
+
+/* The ledger: what was thrown out, struck through like an editor's markup */
+.ledger-intro { margin: -0.4rem 0 1rem; color: var(--ink-soft); max-width: 40em; }
+.ledger .row { padding: 0.7rem 0; }
+.ledger .struck {
+  margin: 0; font: 400 1rem/1.5 var(--serif); color: var(--ink-soft);
+  text-decoration: line-through; text-decoration-color: var(--struck); text-decoration-thickness: 2px;
+  overflow-wrap: anywhere;
+}
+.ledger .struck a { color: inherit; text-decoration: inherit; }
+.ledger .times { display: inline-block; text-decoration: none; margin-left: 0.3em; font: 500 0.85rem var(--sans); }
+.ledger .reason { font-size: 0.88rem; color: var(--struck); align-self: start; }
+.ledger h4 { margin: 1.5rem 0 0.25rem; font: 500 0.95rem var(--sans); color: var(--ink-soft); }
+
+.machine { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--rule); font-size: 0.85rem; color: var(--ink-soft); }
+.nothing { font: 400 1.05rem/1.6 var(--serif); }
+
+@media (max-width: 720px) {
+  .page { padding-top: 1.5rem; }
+  .ask { margin-top: 2.25rem; }
+  .row { grid-template-columns: 1fr; gap: 0.5rem; }
+  .margin { grid-auto-flow: column; justify-content: start; gap: 1rem; }
+  .two-up { grid-template-columns: 1fr; gap: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress li.running .mark::before { animation: none; }
+}

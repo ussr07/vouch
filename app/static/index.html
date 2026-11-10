@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vouch</title>
+<meta name="description" content="Meeting briefs where every line is proven.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,700;1,400&family=Spectral:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+<main class="page">
+  <header class="masthead">
+    <h1 class="wordmark">Vouch</h1>
+    <p class="tagline">Meeting briefs where every line is proven.</p>
+  </header>
+
+  <form id="ask" class="ask" novalidate>
+    <p class="sentence">
+      Brief me on
+      <label class="field field-name">
+        <span class="sr-only">Company or person</span>
+        <input id="name" name="name" type="text" required maxlength="80"
+               placeholder="Infosys" autocomplete="off">
+      </label>,
+      a
+      <label class="field">
+        <span class="sr-only">Type</span>
+        <select id="kind" name="kind">
+          <option value="company">company</option>
+          <option value="person">person</option>
+        </select>
+      </label>,
+      before my
+      <label class="field">
+        <span class="sr-only">Meeting type</span>
+        <select id="goal" name="goal">
+          <option value="investor">investor</option>
+          <option value="sales">sales</option>
+          <option value="partnership">partnership</option>
+          <option value="hiring">hiring</option>
+          <option value="general" selected>general</option>
+        </select>
+      </label>
+      meeting on
+      <label class="field">
+        <span class="sr-only">Meeting date</span>
+        <input id="meeting" name="meeting" type="date" required>
+      </label>.
+    </p>
+    <div class="ask-actions">
+      <button id="go" type="submit">Make brief</button>
+      <p id="form-error" class="form-error" role="alert"></p>
+    </div>
+  </form>
+
+  <ol id="progress" class="progress" aria-live="polite" hidden></ol>
+
+  <section id="result" class="result" hidden aria-labelledby="result-title"></section>
+
+  <section id="empty" class="empty">
+    <p>Vouch reads the last 30 days of news before your meeting, writes a one-page brief,
+       then checks it in code. A line only stays if its quote is found word for word in a
+       real article. Everything it throws out is listed, with the reason.</p>
+  </section>
+</main>
+<script src="/static/app.js"></script>
+</body>
+</html>
