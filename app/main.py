@@ -25,7 +25,7 @@ load_dotenv(ROOT / ".env")
 
 from app.serialize import brief_to_dict  # noqa: E402
 from vouch.draft import GOALS  # noqa: E402
-from vouch import store  # noqa: E402
+from vouch import gateway, store  # noqa: E402
 from vouch.pipeline import Cancelled, make_brief  # noqa: E402
 from vouch.research import ANGLES, meeting_problem  # noqa: E402
 
@@ -69,6 +69,12 @@ def brief_page(brief_id: str):
     return FileResponse(STATIC / "index.html")
 
 
+@app.get("/api/gateway")
+def gateway_usage():
+    """Today's usage of Vouch's Bifrost virtual key: requests, tokens, spend."""
+    return gateway.usage()
+
+
 @app.get("/api/briefs")
 def list_briefs(limit: int = Query(50, ge=1, le=200)):
     return {"briefs": store.recent(limit)}
@@ -85,6 +91,12 @@ def get_brief(brief_id: str):
 def _event(kind: str, data: dict) -> str:
     """One Server-Sent Event: the browser receives these as they happen."""
     return f"event: {kind}\ndata: {json.dumps(data)}\n\n"
+
+
+def _bifrost_type(error: Exception) -> str:
+    """Bifrost labels its own refusals ("request_limited", "budget_exceeded"...)."""
+    body = getattr(error, "body", None)
+    return str(body.get("type", "")) if isinstance(body, dict) else ""
 
 
 def _friendly(error: Exception) -> str:
@@ -104,6 +116,12 @@ def _friendly(error: Exception) -> str:
     if isinstance(error, (openai.APIConnectionError, httpx.ConnectError)):
         return ("Can't reach the model gateway. Start Bifrost with "
                 "scripts\\start_bifrost.py, then try again.")
+    if isinstance(error, openai.APIStatusError) and error.status_code == 402:
+        return ("Vouch's daily model budget in Bifrost is used up. It resets tomorrow; "
+                "the limit is set in bifrost/config.json.")
+    if isinstance(error, openai.RateLimitError) and _bifrost_type(error) in ("request_limited", "token_limited"):
+        return ("Vouch has reached its daily limit in Bifrost (bifrost/config.json: 300 requests, "
+                "300,000 tokens a day). It resets tomorrow.")
     if isinstance(error, openai.RateLimitError):
         return "Every model is rate-limited right now. Wait a minute and try again."
     if isinstance(error, openai.APIStatusError):

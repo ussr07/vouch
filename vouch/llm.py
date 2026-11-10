@@ -30,8 +30,13 @@ FALLBACK_MODELS = os.environ.get(
 REQUEST_TIMEOUT = 45
 SLOW_ATTEMPT = 30   # if a first attempt took this long, don't spend another on bad JSON
 
+# Every call carries Vouch's virtual key, so Bifrost applies Vouch's daily limits
+# and budget (bifrost/config.json "governance") and its logs show which app called.
+VIRTUAL_KEY = os.environ.get("VOUCH_VK", "")
+
 _client = OpenAI(base_url=BIFROST_URL, api_key="handled-by-bifrost",
-                 timeout=REQUEST_TIMEOUT, max_retries=1)
+                 timeout=REQUEST_TIMEOUT, max_retries=1,
+                 default_headers={"x-bf-vk": VIRTUAL_KEY} if VIRTUAL_KEY else None)
 
 
 @dataclass

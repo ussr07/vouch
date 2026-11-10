@@ -116,6 +116,12 @@ class Server(unittest.TestCase):
             (openai.APIConnectionError(request=request), "Can't reach the model gateway"),
             (openai.APITimeoutError(request=request), "took too long"),
             (RuntimeError("the model's reply was cut off before it finished"), "couldn't be used"),
+            (openai.RateLimitError("limited", response=httpx.Response(429, request=request),
+                                   body={"type": "request_limited"}), "reached its daily limit in Bifrost"),
+            (openai.RateLimitError("limited", response=httpx.Response(429, request=request),
+                                   body={"type": "rate_limit_exceeded"}), "Every model is rate-limited"),
+            (openai.APIStatusError("budget", response=httpx.Response(402, request=request),
+                                   body={"type": "budget_exceeded"}), "daily model budget"),
             (ZeroDivisionError("boom"), "ZeroDivisionError"),
         ]
         for error, expected in cases:
@@ -148,6 +154,31 @@ class SlotRelease(unittest.TestCase):
         self.assertTrue(other.acquire())                 # free again, and not over-released
         self.assertFalse(server._Slot().acquire())
         other.release()
+
+
+
+class GatewayUsage(unittest.TestCase):
+    def test_unavailable_bifrost_is_reported_not_raised(self):
+        with mock.patch.dict("os.environ", {"BIFROST_ADMIN_USERNAME": "a", "BIFROST_ADMIN_PASSWORD": "b"}), \
+             mock.patch("vouch.gateway.urllib.request.urlopen", side_effect=__import__("urllib.error").error.URLError("down")):
+            body = TestClient(server.app).get("/api/gateway").json()
+        self.assertFalse(body["available"])
+        self.assertIn("didn't answer", body["reason"])
+
+    def test_usage_numbers_are_read(self):
+        payload = json.dumps({"virtual_key": {
+            "rate_limit": {"request_current_usage": 5, "request_max_limit": 300,
+                           "token_current_usage": 14396, "token_max_limit": 300000,
+                           "request_reset_duration": "1d"},
+            "budgets": [{"current_usage": 0.003045, "max_limit": 1}]}}).encode()
+        fake = mock.MagicMock()
+        fake.__enter__.return_value.read.return_value = payload
+        with mock.patch.dict("os.environ", {"BIFROST_ADMIN_USERNAME": "a", "BIFROST_ADMIN_PASSWORD": "b"}), \
+             mock.patch("vouch.gateway.urllib.request.urlopen", return_value=fake), \
+             mock.patch("vouch.gateway.json.load", return_value=json.loads(payload)):
+            body = TestClient(server.app).get("/api/gateway").json()
+        self.assertEqual((body["requests_used"], body["tokens_limit"]), (5, 300000))
+        self.assertAlmostEqual(body["spend_usd"], 0.003045, places=5)
 
 
 if __name__ == "__main__":

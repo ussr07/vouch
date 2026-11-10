@@ -1,21 +1,131 @@
 {
   "$schema": "https://www.getbifrost.ai/schema",
   "client": {
-    "drop_excess_requests": false
+    "drop_excess_requests": false,
+    "enable_logging": true
   },
   "providers": {
     "groq": {
       "keys": [
-        { "name": "groq-free", "value": "env.GROQ_API_KEY", "models": ["*"], "weight": 1.0 }
+        {
+          "name": "groq-free",
+          "value": "env.GROQ_API_KEY",
+          "models": [
+            "*"
+          ],
+          "weight": 1.0
+        }
       ]
     },
     "gemini": {
       "keys": [
-        { "name": "gemini-free", "value": "env.GEMINI_API_KEY", "models": ["*"], "weight": 1.0 }
+        {
+          "name": "gemini-free",
+          "value": "env.GEMINI_API_KEY",
+          "models": [
+            "*"
+          ],
+          "weight": 1.0
+        }
       ]
     }
   },
   "config_store": {
-    "enabled": false
+    "enabled": true,
+    "type": "sqlite",
+    "config": {
+      "path": "./config.db"
+    }
+  },
+  "logs_store": {
+    "enabled": true,
+    "type": "sqlite",
+    "config": {
+      "path": "./logs.db"
+    }
+  },
+  "governance": {
+    "rate_limits": [
+      {
+        "id": "rl-vouch-daily",
+        "request_max_limit": 300,
+        "request_reset_duration": "1d",
+        "token_max_limit": 300000,
+        "token_reset_duration": "1d"
+      },
+      {
+        "id": "rl-limit-demo",
+        "request_max_limit": 2,
+        "request_reset_duration": "1m"
+      }
+    ],
+    "budgets": [
+      {
+        "id": "budget-vouch-daily",
+        "max_limit": 1.0,
+        "reset_duration": "1d",
+        "virtual_key_id": "vk-vouch"
+      }
+    ],
+    "virtual_keys": [
+      {
+        "id": "vk-vouch",
+        "name": "vouch-app",
+        "value": "env.VOUCH_VK",
+        "rate_limit_id": "rl-vouch-daily",
+        "provider_configs": [
+          {
+            "provider": "groq",
+            "allowed_models": [
+              "*"
+            ],
+            "key_ids": [
+              "*"
+            ]
+          },
+          {
+            "provider": "gemini",
+            "allowed_models": [
+              "*"
+            ],
+            "key_ids": [
+              "*"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "vk-limit-demo",
+        "name": "limit-demo",
+        "value": "env.VOUCH_DEMO_VK",
+        "rate_limit_id": "rl-limit-demo",
+        "provider_configs": [
+          {
+            "provider": "groq",
+            "allowed_models": [
+              "*"
+            ],
+            "key_ids": [
+              "*"
+            ]
+          },
+          {
+            "provider": "gemini",
+            "allowed_models": [
+              "*"
+            ],
+            "key_ids": [
+              "*"
+            ]
+          }
+        ]
+      }
+    ],
+    "auth_config": {
+      "is_enabled": true,
+      "admin_username": "env.BIFROST_ADMIN_USERNAME",
+      "admin_password": "env.BIFROST_ADMIN_PASSWORD",
+      "disable_auth_on_inference": true
+    }
   }
 }

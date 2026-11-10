@@ -61,7 +61,9 @@ Steps 2, 3 (the decision) and 5 are plain Python you can read in `vouch/filters.
 - Every model call (entity sorting and drafting) goes to the local Bifrost gateway at `http://localhost:8080/v1`. Vouch's code never holds a provider key; Bifrost does.
 - Two right-sized models: `groq/openai/gpt-oss-120b` writes the brief and the smaller `groq/openai/gpt-oss-20b` sorts articles by entity. On Groq's free tier each model has its own rate limit, so splitting the work avoids most 429s.
 - Every request lists fallbacks (`gemini/gemini-3.5-flash-lite`, then `groq/qwen/qwen3.8-27b`). When the requested model fails or is rate-limited, Bifrost retries on the next one by itself. The page shows which model actually wrote the brief, read from `extra_fields.routing_info`.
-- Bifrost is configured from a plain `bifrost/config.json` that refers to keys by environment variable name, so it is safe to commit.
+- **Governance.** Vouch calls Bifrost with its own virtual key (`x-bf-vk`), and Bifrost enforces Vouch's limits: 300 requests and 300,000 tokens a day, and a $1 daily budget priced at list rates. A runaway loop can't drain the free quotas. Tested: a second demo key capped at 2 requests a minute returned 200, 200, then 429 (`scripts/check_governance.py limit`); a made-up key is refused with 401.
+- **Cost per brief, measured by Bifrost.** Bifrost prices every call at the provider's list rate. One brief is 2 model calls, about 7,700 tokens, and about **$0.0016** at list price (free on the free tiers used here). `GET /api/gateway` returns today's requests, tokens and spend for Vouch's key.
+- Bifrost is configured from a plain `bifrost/config.json` that refers to keys by environment variable name, so it is safe to commit. `scripts/start_bifrost.py` creates Vouch's virtual key and a dashboard login in `.env` on first run.
 
 ## Reliability and safety
 
@@ -130,6 +132,7 @@ Terminal 2, check the gateway and its fallback, then start Vouch:
 
 ```powershell
 .\.venv\Scripts\python.exe scripts\check_bifrost.py
+.\.venv\Scripts\python.exe scripts\check_governance.py      # limits, usage, and a refused fake key
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --port 8000
 ```
 
@@ -153,11 +156,12 @@ vouch/entity.py     step 3: which-one decision
 vouch/llm.py        all model calls, through Bifrost, with fallback and time limits
 vouch/shapes.py     reads the model's JSON defensively (odd shapes never crash a brief)
 vouch/store.py      saved briefs, reopened by id without new API calls
+vouch/gateway.py    reads Vouch's usage, limits and spend from Bifrost governance
 vouch/draft.py      step 4: the drafting prompt
 vouch/verify.py     step 5: quote, figure and relevance checks
 vouch/pipeline.py   runs the steps and reports each stage
 app/                FastAPI server (streams stages) and the web page
-tests/              83 offline tests: logic, pipeline and server (fake Tavily and Bifrost)
+tests/              85 offline tests: logic, pipeline and server (fake Tavily and Bifrost)
 eval/               evaluation subjects, tamper test, results
 bifrost/config.json gateway configuration
 ```
