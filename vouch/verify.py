@@ -50,6 +50,33 @@ def key_words(text: str, ignore: str = "") -> set[str]:
     return {w[:5] for w in words if w not in _STOPWORDS and w not in skip}
 
 
+_MONTHS = {m: i for i, m in enumerate(
+    ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"], start=1)}
+_MONTH_YEAR = re.compile(
+    r"\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?\s+(?:\d{1,2}(?:st|nd|rd|th)?,?\s+)?(20\d\d)\b",
+    re.IGNORECASE)
+_YEAR_ONLY = re.compile(r"\b(?:in|since|during|from)\s+(20\d\d)\b", re.IGNORECASE)
+
+
+def older_event(text: str, window_start: date | None) -> str | None:
+    """If the text dates the event before the window, return e.g. 'May 2026'.
+
+    An article published last week can describe something from months ago.
+    We flag it rather than present it as fresh news.
+    """
+    if window_start is None:
+        return None
+    earliest = None
+    for month, year in _MONTH_YEAR.findall(text):
+        when = date(int(year), _MONTHS[month[:3].lower()], 1)
+        if when < window_start.replace(day=1) and (earliest is None or when < earliest[0]):
+            earliest = (when, f"{month[:3].title()} {year}")
+    for year in _YEAR_ONLY.findall(text):
+        if int(year) < window_start.year and (earliest is None or int(year) < earliest[0].year):
+            earliest = (date(int(year), 1, 1), year)
+    return earliest[1] if earliest else None
+
+
 @dataclass
 class Story:
     headline: str
@@ -60,6 +87,7 @@ class Story:
     sources: list[Kept]
     quote: str
     quote_source: Kept
+    older_event: str | None = None   # computed in code, e.g. "May 2026"
 
 
 @dataclass
@@ -81,7 +109,8 @@ def _site(kept: Kept) -> str:
     return re.sub(r"^(www\.|m\.|amp\.)", "", host)
 
 
-def verify(raw: dict, articles: list[Kept], subject: str = "") -> Verified:
+def verify(raw: dict, articles: list[Kept], subject: str = "",
+           window_start: date | None = None) -> Verified:
     out = Verified()
     by_number = {i: k for i, k in enumerate(articles, start=1)}
     story_id_to_position: dict[int, int] = {}
@@ -129,6 +158,7 @@ def verify(raw: dict, articles: list[Kept], subject: str = "") -> Verified:
             sources=sources,
             quote=q_text.strip(),
             quote_source=by_number[q_id],
+            older_event=older_event(q_text + " " + claim, window_start),
         ))
         story_id_to_position[s.get("id")] = len(out.stories)
 

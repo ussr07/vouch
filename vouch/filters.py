@@ -64,6 +64,22 @@ def mentions(name: str, text: str) -> bool:
     return re.search(pattern, text, flags=re.IGNORECASE) is not None
 
 
+def names_subject(run: SearchRun, source: Source) -> bool:
+    """Is the subject named in the headline?
+
+    Companies: the full name must be in the headline.
+    People: headlines often use only the surname ("Nilekani says..."), so the
+    surname in the headline counts if the full name appears in the text.
+    Tested on live data: requiring the full name dropped 2 valid articles.
+    """
+    if mentions(run.name, source.title):
+        return True
+    parts = run.name.split()
+    if run.kind == "person" and len(parts) > 1:
+        return mentions(parts[-1], source.title) and mentions(run.name, source.snippet)
+    return False
+
+
 def filter_run(run: SearchRun) -> FilterResult:
     result = FilterResult()
     seen_urls: set[str] = set()
@@ -83,7 +99,7 @@ def filter_run(run: SearchRun) -> FilterResult:
         elif not (run.window_start <= published <= run.window_end):
             reason = (f"published {published}, outside the window "
                       f"{run.window_start} to {run.window_end}")
-        elif not mentions(run.name, source.title):
+        elif not names_subject(run, source):
             # Tested on live data: real articles name the subject in the headline,
             # while junk (aggregator pages, the company's own blog posts) only
             # mentions it in passing in the body text.

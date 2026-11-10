@@ -59,7 +59,8 @@ def window_for(meeting_at: datetime, today: date | None = None) -> tuple[date, d
     return end - timedelta(days=WINDOW_DAYS), end
 
 
-def search(name: str, kind: str, meeting_at: datetime, max_results: int = 8) -> SearchRun:
+def search(name: str, kind: str, meeting_at: datetime, max_results: int = 8,
+           about: str = "") -> SearchRun:
     if kind not in ANGLES:
         raise ValueError(f"kind must be one of {list(ANGLES)}, got {kind!r}")
     start, end = window_for(meeting_at)
@@ -68,7 +69,8 @@ def search(name: str, kind: str, meeting_at: datetime, max_results: int = 8) -> 
 
     for angle, template in ANGLES[kind].items():
         params = {
-            "query": template.format(name=name),
+            # "Mercury (startup bank) news" finds the right Mercury far more often
+            "query": template.format(name=f"{name} ({about})" if about else name),
             "topic": "news",
             "search_depth": "basic",   # 1 credit; "advanced" costs 2
             "max_results": max_results,

@@ -31,6 +31,10 @@ const STAGES = {
             done: (d) => `Found ${plural(d.found, "article")}` +
                          (d.credits ? ` (${plural(d.credits, "search credit")} used)` : " (from cache, no credits used)") },
   filter: { done: (d) => `Kept ${d.kept}, threw out ${d.rejected}` },
+  entity: { running: "Checking every article is about the same one",
+            done: (d) => d.needs_choice ? `Found ${d.groups} different subjects with this name`
+                       : d.set_aside ? `Kept ${d.kept} about ${d.label || "this subject"}, set aside ${d.set_aside} about others`
+                       : `All ${d.kept} articles are about the same subject` },
   draft:  { running: (d) => `Writing the draft with ${d.model}`,
             done: (d) => `Draft written by ${d.served_by} in ${d.seconds}s` +
                          (d.fallback ? " (backup model took over)" : "") },
@@ -76,7 +80,8 @@ function storyRow(s, i) {
       h("p", { class: "summary", text: s.summary }),
       quote, sources),
     h("div", { class: "margin" },
-      h("span", { text: fmtDate(s.date) }),
+      h("span", { text: `Reported ${fmtDate(s.date)}` }),
+      s.older_event ? h("span", { class: "older", text: `Older event: ${s.older_event}` }) : null,
       h("span", { text: plural(s.outlets.length, "outlet") }),
       h("span", { class: "check", text: "✓ Quote verified" })));
 }
@@ -115,13 +120,32 @@ function ledger(l) {
     rows(l.draft, "Lines the AI wrote that failed our checks"));
 }
 
+function renderChoices(b) {
+  const r = $("result");
+  r.replaceChildren(h("section", { class: "choose", "aria-labelledby": "result-title" },
+    h("h3", { id: "result-title", text: `Which ${b.subject.name} do you mean?` }),
+    h("p", { text: `The news mentions ${b.choices.length} different subjects with this name. ` +
+                   "Pick one and Vouch will search again for that one only." }),
+    h("ul", {}, b.choices.map((c) => h("li", {},
+      h("button", { type: "button", "data-label": c.label },
+        c.label, h("span", { text: plural(c.count, "article") })))))));
+  r.querySelectorAll("button[data-label]").forEach((btn) => btn.addEventListener("click", () => {
+    $("about").value = btn.dataset.label;
+    $("ask").requestSubmit();
+  }));
+  r.hidden = false;
+  $("empty").hidden = true;
+}
+
 function renderBrief(b) {
+  if (b.choices && b.choices.length) return renderChoices(b);
   const r = $("result");
   r.replaceChildren();
   const c = b.counts;
 
   r.append(h("header", { class: "brief-head" },
     h("h2", { id: "result-title", text: b.subject.name }),
+    b.subject.identified_as ? h("p", { class: "identified", text: `Identified as ${b.subject.identified_as}` }) : null,
     h("p", { text: `${b.subject.goal[0].toUpperCase() + b.subject.goal.slice(1)} meeting on ${fmtDate(b.subject.meeting)}. ` +
                    `News from ${fmtDate(b.window.start)} to ${fmtDate(b.window.end)}.` }),
     h("p", { class: "funnel" },
@@ -148,7 +172,7 @@ function renderBrief(b) {
   if (b.model) {
     r.append(h("p", { class: "machine", text:
       `Written by ${b.model.served_by}${b.model.fallback ? " (backup model, primary was unavailable)" : ""} via the Bifrost gateway, ` +
-      `${(b.model.prompt_tokens + b.model.completion_tokens).toLocaleString()} tokens, ${b.seconds}s in total. ` +
+      `${(b.model.prompt_tokens + b.model.completion_tokens + b.model.entity_check_tokens).toLocaleString()} tokens, ${b.seconds}s in total. ` +
       `Search by Tavily (${plural(c.credits, "credit")}).` }));
   }
   r.hidden = false;
@@ -174,7 +198,8 @@ $("ask").addEventListener("submit", (e) => {
   $("go").disabled = true;
   $("go").textContent = "Making brief";
 
-  const qs = new URLSearchParams({ name, kind: $("kind").value, goal: $("goal").value, meeting });
+  const qs = new URLSearchParams({ name, kind: $("kind").value, goal: $("goal").value, meeting,
+                                  about: $("about").value.trim() });
   source = new EventSource(`/api/brief?${qs}`);
   const finish = () => { source.close(); source = null; $("go").disabled = false; $("go").textContent = "Make brief"; };
 
@@ -184,4 +209,5 @@ $("ask").addEventListener("submit", (e) => {
   source.onerror = () => { if (source) { finish(); showFailure("Lost the connection to the Vouch server. Is it still running?"); } };
 });
 
-$("name").addEventListener("input", () => { $("form-error").textContent = ""; });
+// A new name means the old "which one" hint no longer applies.
+$("name").addEventListener("input", () => { $("form-error").textContent = ""; $("about").value = ""; });

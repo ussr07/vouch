@@ -89,6 +89,25 @@ class FilterRun(unittest.TestCase):
                                          snippet="Also today: Infosys launches 200 agents")))
         self.assertIn("only mentioned in passing", self.reasons(result)[0])
 
+    def person_run(self, *sources):
+        r = run_with(*sources)
+        r.name, r.kind = "Nandan Nilekani", "person"
+        return r
+
+    def test_person_surname_headline_kept_when_text_has_full_name(self):
+        result = filter_run(self.person_run(src("https://a.com/1", title="Nilekani calls for exam reform",
+                                                snippet="Nandan Nilekani said on Monday...")))
+        self.assertEqual(len(result.kept), 1)
+
+    def test_person_surname_only_everywhere_rejected(self):
+        result = filter_run(self.person_run(src("https://a.com/1", title="Nilekani calls for exam reform",
+                                                snippet="A Nilekani in Pune said...")))
+        self.assertEqual(result.kept, [])
+
+    def test_company_needs_full_name_in_headline(self):
+        r = run_with(src("https://a.com/1", title="Infy wins deal", snippet="Infosys won a deal"))
+        self.assertEqual(filter_run(r).kept, [])
+
 
 if __name__ == "__main__":
     unittest.main()

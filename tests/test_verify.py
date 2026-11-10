@@ -7,7 +7,7 @@ from datetime import date
 
 from vouch.filters import Kept
 from vouch.research import Source
-from vouch.verify import normalise, quote_found, verify
+from vouch.verify import normalise, older_event, quote_found, verify
 
 ARTICLE_TEXT = ("Infosys reported a 6% rise in quarterly profit to Rs 7,823 crore. "
                 "The board declared an interim dividend of ₹26 per share.")
@@ -88,6 +88,25 @@ class Verify(unittest.TestCase):
                                 "text": "The board declared an interim dividend of \u20b926 per share."})
         result = verify({"stories": [bad]}, self.articles, subject="Infosys")
         self.assertIn("doesn't back up this claim", result.removed[0][1])
+
+
+class OlderEvent(unittest.TestCase):
+    START = date(2026, 10, 11)
+
+    def test_month_before_window_flagged(self):
+        self.assertEqual(older_event("In May 2026, the company announced a Series D", self.START), "May 2026")
+
+    def test_full_date_before_window_flagged(self):
+        self.assertEqual(older_event("on July 4, 2026 he stepped down", self.START), "Jul 2026")
+
+    def test_earlier_year_flagged(self):
+        self.assertEqual(older_event("a deal signed in 2024", self.START), "2024")
+
+    def test_same_month_as_window_not_flagged(self):
+        self.assertIsNone(older_event("results for October 2026", self.START))
+
+    def test_fiscal_year_names_not_flagged(self):
+        self.assertIsNone(older_event("Q2 FY27 revenue rose 1.5%", self.START))
 
 
 if __name__ == "__main__":

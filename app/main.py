@@ -66,8 +66,10 @@ async def brief_stream(
     kind: str = Query("company"),
     goal: str = Query("general"),
     meeting: str = Query(...),
+    about: str = Query("", max_length=80),
 ):
     name = " ".join(name.split())
+    about = " ".join(about.split())
     problems = []
     if kind not in ANGLES:
         problems.append(f"Choose company or person, not '{kind}'.")
@@ -82,7 +84,7 @@ async def brief_stream(
 
     def worker():
         try:
-            b = make_brief(name, kind, meeting_at, goal,
+            b = make_brief(name, kind, meeting_at, goal, about=about,
                            on_step=lambda stage, data: events.put(("step", {"stage": stage, **data})))
             events.put(("brief", brief_to_dict(b)))
         except Exception as e:  # report every failure to the page, never hang

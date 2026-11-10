@@ -21,8 +21,14 @@ name = sys.argv[1] if len(sys.argv) > 1 else "Infosys"
 kind = sys.argv[2] if len(sys.argv) > 2 else "company"
 meeting = datetime.fromisoformat(sys.argv[3]) if len(sys.argv) > 3 else datetime.now()
 goal = sys.argv[4] if len(sys.argv) > 4 else "general"
+about = sys.argv[5] if len(sys.argv) > 5 else ""
 
-b = make_brief(name, kind, meeting, goal)
+b = make_brief(name, kind, meeting, goal, about=about)
+if b.entity and b.entity.needs_choice:
+    print(f"'{name}' is ambiguous. Rerun with one of these as the 5th argument:")
+    for c in b.entity.choices:
+        print(f"  {c['label']}  ({c['count']} articles)")
+    raise SystemExit(0)
 c = b.checked
 print(f"BRIEF: {b.name} | meeting {b.meeting_at.date()} | purpose: {b.goal}")
 print(f"Window {b.run.window_start} to {b.run.window_end} | "
@@ -35,7 +41,8 @@ if b.model_call:
 
 print("\nWHAT HAPPENED")
 for i, s in enumerate(c.stories, 1):
-    print(f" {i}. [{s.date}] {s.headline}  ({len(s.outlets)} outlet{'s' if len(s.outlets) > 1 else ''})")
+    flag = f"  OLDER EVENT: {s.older_event}" if s.older_event else ""
+    print(f" {i}. [{s.date}] {s.headline}  ({len(s.outlets)} outlet{'s' if len(s.outlets) > 1 else ''}){flag}")
     print(f"    {s.summary}")
     print(f"    PROOF: \"{s.quote}\" - {s.quote_source.source.url[:80]}")
 print("\nTALKING POINTS")
@@ -47,6 +54,8 @@ for p in c.open_questions:
 
 print("\nREJECTION LEDGER")
 for reason, n in Counter(r.reason for r in b.filtered.rejected).most_common():
+    print(f" {n} x article: {reason}")
+for reason, n in Counter(r for _, r in (b.entity.set_aside if b.entity else [])).most_common():
     print(f" {n} x article: {reason}")
 for item, reason in c.removed:
     print(f" 1 x AI draft: {item!r}: {reason}")
