@@ -1,4 +1,4 @@
-﻿# Vouch
+# Vouch
 
 **Meeting briefs where every line is proven.**
 

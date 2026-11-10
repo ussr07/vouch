@@ -7,3 +7,4 @@ bifrost/*.db
 bifrost/*.db-*
 bifrost/logs/
 scripts/_*.py
+*.tmp
