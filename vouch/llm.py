@@ -50,7 +50,8 @@ def _extract_json(text: str) -> dict:
 
 
 def chat_json(system: str, user: str, max_tokens: int = 6000,
-              model: str | None = None, reasoning: str = "low") -> tuple[dict, CallInfo]:
+              model: str | None = None, reasoning: str = "low",
+              temperature: float = 0.2) -> tuple[dict, CallInfo]:
     """Ask for a JSON reply. Retries once if the reply isn't valid JSON."""
     last_error = None
     for _attempt in range(2):
@@ -60,7 +61,7 @@ def chat_json(system: str, user: str, max_tokens: int = 6000,
             messages=[{"role": "system", "content": system},
                       {"role": "user", "content": user}],
             max_tokens=max_tokens,
-            temperature=0.2,
+            temperature=temperature,
             response_format={"type": "json_object"},
             # gpt-oss models "think" before answering; low effort is enough for
             # these tasks and cuts hidden tokens. Models without it ignore it.

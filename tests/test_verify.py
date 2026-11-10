@@ -89,6 +89,13 @@ class Verify(unittest.TestCase):
         result = verify({"stories": [bad]}, self.articles, subject="Infosys")
         self.assertIn("doesn't back up this claim", result.removed[0][1])
 
+    def test_number_words_count_as_figures(self):
+        arts = [kept(1, text="Only one in 10 option buyers make money, according to the founder.")]
+        story = {"id": 1, "headline": "Only 1 in 10 option buyers profit", "summary": "s",
+                 "article_ids": [1],
+                 "quote": {"article_id": 1, "text": "Only one in 10 option buyers make money"}}
+        self.assertEqual(len(verify({"stories": [story]}, arts).stories), 1)
+
 
 class OlderEvent(unittest.TestCase):
     START = date(2026, 10, 11)

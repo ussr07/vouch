@@ -40,22 +40,27 @@ The page shows each stage live as it finishes, then the brief, then **"What we l
 
 ## Results
 
-Measured on 10 Nov 2026 with `eval/run_eval.py` on 7 subjects, two runs. Expectations (which names are ambiguous) were written in `eval/subjects.json` **before** the first run. Full tables: [run 1](eval/RESULTS-run1.md), [run 2](eval/RESULTS.md).
+Measured on 10 Nov 2026 with `eval/run_eval.py` on 7 subjects, three runs. Expectations (which names are ambiguous) were written in `eval/subjects.json` **before** the first run. The code changed between runs (each fix is described below), so every run is kept: [run 1](eval/RESULTS-run1.md), [run 2](eval/RESULTS-run2.md), [run 3, current code](eval/RESULTS.md).
 
-| Measure | Result |
-|---|---|
-| AI-written stories removed by the code checks | **5 of 52 (about 10%)**: claims a reader would otherwise have taken as fact |
-| Tamper test: verified stories corrupted on purpose (figure changed, quote paraphrased, wrong article cited, figure invented, quote invented) | **207 of 207 caught** |
-| Ambiguous names handled as expected | **6 of 7** in both runs. Miss: "Apollo" was expected to need a choice, but Apollo Global Management dominated the news, so Vouch kept it and set aside 5 to 9 articles about other Apollos. |
-| Time per brief | Run 1: 11 to 63 s. Run 2: **3 to 14 s** |
-| Tavily credits per new brief | 3 to 4 (cached reruns: 0) |
-| Errors | 0 of 14 briefs |
+| Measure | Run 1 | Run 2 | Run 3 | Total |
+|---|---|---|---|---|
+| Tamper test: verified stories corrupted on purpose and re-checked | 123 of 123 caught | 84 of 84 | 116 of 116 | **323 of 323** |
+| AI-written stories removed by the code checks | 4 of 32 | 1 of 20 | 1 of 27 | **6 of 79 (8%)** |
+| Ambiguous names handled as expected | 6 of 7 | 6 of 7 | 6 of 7 | Same miss each time (below) |
+| Time per brief | 11 to 63 s | 3 to 14 s | 2 to 38 s | |
+| Errors | 0 | 0 | 0 | **0 of 21 briefs** |
 
-**What changed between runs.** Run 1 sent both model calls to the same Groq model, and Groq's free tier limits tokens per minute per model, so requests waited on HTTP 429s. Run 2 gives the simple entity-sorting job to the smaller `gpt-oss-20b` (its own limit) and asks reasoning models for low effort, cutting a draft from about 7,500 to 5,700 tokens and 10 s to 4 s.
+The tamper test changes one thing at a time in a story that passed: a figure in the quote, the quote's word order, the article it cites, an invented figure in the summary, or a wholly invented quote. "AI-written stories removed" counts claims the model drafted that could not be backed up; a reader would otherwise have taken them as fact.
 
-**Bifrost in practice.** By run 2, a day of testing had used up Groq's daily free allowance, so Bifrost had Gemini write 5 of the 7 briefs with no errors and no code change. Separately, a model we tried (`llama-3.1-8b-instant`) had been retired by Groq; every call to it fell back to Gemini and still returned correct results. The cost is quality: the Gemini fallback drafted fewer stories (2 to 4 per brief instead of up to 6).
+**The miss.** "Apollo" was expected to need a choice, but Apollo Global Management dominated the news, so Vouch kept it and set aside the articles about other Apollos (5 to 9 per run) instead of asking.
 
-**What these numbers do not show.** The subjects are well-covered companies, each run once per round. The tamper test uses corruptions we designed, so it proves the checks work as specified, not that they catch every kind of mistake. Nobody has hand-graded whether each summary's interpretation is right.
+**What changed between runs.**
+- Run 1 to 2: both model calls went to the same Groq model, whose free tier limits tokens per minute per model, so requests waited on HTTP 429s. The simple entity-sorting job moved to the smaller `gpt-oss-20b` (its own limit), and reasoning models were asked for low effort. A draft went from about 7,500 to 5,700 tokens and 10 s to 4 s.
+- Run 2 to 3: the entity step sometimes grouped articles by topic, so "Angel One overtakes Zerodha" was set aside as "a different Zerodha". Its instructions now ask *which* entity an article refers to, at temperature 0; articles it forgets to assign are kept when only one entity exists. The figure check now reads number words ("one in 10" matches "1 in 10").
+
+**Bifrost in practice.** By runs 2 and 3, a day of testing had used up much of Groq's free allowance. Bifrost moved those briefs to Gemini, and once to the second fallback (`qwen3.8-27b` on Groq), with no errors and no code change. A model we tried (`llama-3.1-8b-instant`) had been retired by Groq; every call to it fell back and still returned correct results. The cost is quality: Gemini drafted fewer stories (2 to 4 per brief instead of up to 6), and rate-limit waits explain the 38 s worst case in run 3.
+
+**What these numbers do not show.** The subjects are well-covered companies and one person, one brief each per run. The tamper test uses corruptions we designed, so it proves the checks work as specified, not that they catch every kind of mistake. Nobody has hand-graded whether each summary's interpretation is right.
 
 ## Run it yourself (Windows)
 

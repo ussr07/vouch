@@ -33,9 +33,18 @@ def quote_found(quote: str, source_text: str) -> bool:
     return len(q.split()) >= 4 and q in normalise(source_text)
 
 
+_NUMBER_WORDS = {w: str(i) for i, w in enumerate(
+    "zero one two three four five six seven eight nine ten eleven twelve".split())}
+
+
 def numbers_in(text: str) -> set[str]:
-    """Figures like 8%, $5.2 billion, 1,000, Rs 26 -> {'8', '5.2', '1000', '26'}."""
-    return {n.replace(",", "") for n in re.findall(r"\d[\d,]*(?:\.\d+)?", text)}
+    """Figures like 8%, $5.2 billion, 1,000, Rs 26 -> {'8', '5.2', '1000', '26'}.
+
+    Number words count too: articles write "one in 10" where a summary writes "1 in 10".
+    """
+    found = {n.replace(",", "") for n in re.findall(r"\d[\d,]*(?:\.\d+)?", text)}
+    found |= {_NUMBER_WORDS[w] for w in re.findall(r"[a-z]+", text.lower()) if w in _NUMBER_WORDS}
+    return found
 
 
 _STOPWORDS = {"about", "after", "their", "there", "these", "which", "while", "would",

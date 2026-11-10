@@ -16,13 +16,18 @@ from vouch.llm import ENTITY_MODEL, CallInfo, chat_json
 DOMINANT_SHARE = 0.75
 SNIPPET_CHARS = 250
 
-SYSTEM = """You sort news articles by which real-world entity they are about.
+SYSTEM = """A name can belong to several real-world entities (Mercury the bank,
+Mercury the record label). For each article, decide WHICH entity with the
+searched name it refers to. Group by that, NOT by the article's main topic.
 Rules:
+- An article about a competitor, partner or customer that mentions the searched
+  name still belongs to the entity with that name it refers to.
 - Articles about the same organisation, including its subsidiaries, divisions,
   products and executives, belong to ONE entity.
 - A person with the same name as another person is a DIFFERENT entity.
 - Every article number must appear in exactly one entity.
-- Labels are short and specific, e.g. "Mercury, the US fintech bank for startups".
+- Labels name the entity with the searched name, short and specific,
+  e.g. "Mercury, the US fintech bank for startups".
 - Reply with a single JSON object only."""
 
 
@@ -99,5 +104,5 @@ def decide(raw: dict, kept: list[Kept], name: str, about: str = "") -> EntityDec
 
 def resolve(name: str, kind: str, about: str, kept: list[Kept]) -> tuple[EntityDecision, CallInfo]:
     raw, info = chat_json(SYSTEM, build_prompt(name, kind, about, kept), max_tokens=3000,
-                          model=ENTITY_MODEL)
+                          model=ENTITY_MODEL, temperature=0)
     return decide(raw, kept, name, about), info
