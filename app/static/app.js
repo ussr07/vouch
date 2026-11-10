@@ -21,9 +21,10 @@ const fmtDate = (iso) =>
   new Date(iso + "T00:00:00").toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
-// Default the meeting to tomorrow.
+// Default the meeting to tomorrow at 10:00, in the user's own time zone.
 const tomorrow = new Date(Date.now() + 86400000);
-$("meeting").value = tomorrow.toISOString().slice(0, 10);
+const pad = (n) => String(n).padStart(2, "0");
+$("meeting").value = `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}T10:00`;
 
 // ---------- live progress ----------
 const STAGES = {
@@ -146,7 +147,8 @@ function renderBrief(b) {
   r.append(h("header", { class: "brief-head" },
     h("h2", { id: "result-title", text: b.subject.name }),
     b.subject.identified_as ? h("p", { class: "identified", text: `Identified as ${b.subject.identified_as}` }) : null,
-    h("p", { text: `${b.subject.goal[0].toUpperCase() + b.subject.goal.slice(1)} meeting on ${fmtDate(b.subject.meeting)}. ` +
+    h("p", { text: `${b.subject.goal[0].toUpperCase() + b.subject.goal.slice(1)} meeting on ${fmtDate(b.subject.meeting)}` +
+                   (b.subject.meeting_time ? ` at ${b.subject.meeting_time}` : "") + ". " +
                    `News from ${fmtDate(b.window.start)} to ${fmtDate(b.window.end)}.` }),
     h("p", { class: "funnel" },
       h("strong", { text: c.found }), " articles found, ",
@@ -168,6 +170,9 @@ function renderBrief(b) {
   }
 
   r.append(ledger(b.ledger));
+  const printBtn = h("button", { type: "button", class: "print-btn", text: "Print or save as PDF" });
+  printBtn.addEventListener("click", () => window.print());
+  r.querySelector(".brief-head").append(printBtn);
 
   if (b.model) {
     r.append(h("p", { class: "machine", text:
@@ -189,7 +194,7 @@ $("ask").addEventListener("submit", (e) => {
   const meeting = $("meeting").value;
   $("form-error").textContent = "";
   if (!name) { $("form-error").textContent = "Enter a company or person to brief on."; $("name").focus(); return; }
-  if (!meeting) { $("form-error").textContent = "Pick the meeting date."; $("meeting").focus(); return; }
+  if (!meeting) { $("form-error").textContent = "Pick the meeting date and time."; $("meeting").focus(); return; }
 
   if (source) source.close();
   $("progress").replaceChildren();

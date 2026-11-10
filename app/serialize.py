@@ -14,6 +14,7 @@ def brief_to_dict(b: Brief) -> dict:
     return {
         "subject": {"name": b.name, "kind": b.kind, "goal": b.goal, "about": b.about,
                     "meeting": b.meeting_at.date().isoformat(),
+                    "meeting_time": b.meeting_at.strftime("%H:%M") if b.meeting_at.time() != b.meeting_at.min.time() else None,
                     "identified_as": b.entity.chosen_label if b.entity else None},
         "choices": b.entity.choices if b.entity else [],
         "window": {"start": b.run.window_start.isoformat(), "end": b.run.window_end.isoformat()},
