@@ -85,7 +85,13 @@ def decide(raw: dict, kept: list[Kept], name: str, about: str = "") -> EntityDec
             reason = (f"about a different {name}: {g['label']}" if chosen
                       else f"doesn't match '{about}' (it's about {g['label']})")
             out.set_aside.extend((by_number[i], reason) for i in g["ids"])
-    out.set_aside.extend((k, f"couldn't tell which {name} it's about") for k in unclassified)
+    if chosen is not None and len(groups) == 1:
+        # Only one entity exists, so an article the model forgot to assign has
+        # nothing to be confused with: keep it. (Seen on live data: the model
+        # skipped 3 clearly relevant Zerodha articles.)
+        out.kept.extend(unclassified)
+    else:
+        out.set_aside.extend((k, f"couldn't tell which {name} it's about") for k in unclassified)
     out.chosen_label = chosen["label"] if chosen else None
     out.kept.sort(key=lambda k: k.published, reverse=True)
     return out

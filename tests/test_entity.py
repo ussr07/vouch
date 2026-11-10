@@ -63,11 +63,18 @@ class Decide(unittest.TestCase):
         self.assertEqual(d.kept, [])
         self.assertIn("doesn't match 'the startup bank'", d.set_aside[0][1])
 
-    def test_unclassified_and_fake_ids_handled(self):
+    def test_unassigned_kept_when_only_one_entity(self):
         d = decide({"entities": [{"label": "Mercury bank", "article_ids": [1, 2, 3, 4, 5, 6, 7, 99]}]},
                    ARTICLES, "Mercury")
-        self.assertEqual(len(d.kept), 7)
-        self.assertEqual(d.set_aside[0][1], "couldn't tell which Mercury it's about")
+        self.assertEqual(len(d.kept), 8)   # article 8 unassigned, but nothing to confuse it with
+        self.assertEqual(d.set_aside, [])
+
+    def test_unassigned_set_aside_when_several_entities(self):
+        d = decide({"entities": [{"label": "Mercury bank", "article_ids": [1, 2, 3, 4, 5, 6]},
+                                 {"label": "Mercury Records", "article_ids": [7]}]},
+                   ARTICLES, "Mercury")
+        self.assertEqual(len(d.kept), 6)
+        self.assertIn(("couldn't tell which Mercury it's about"), [r for _, r in d.set_aside])
 
 
 if __name__ == "__main__":
