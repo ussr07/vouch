@@ -1,4 +1,4 @@
-# Vouch
+﻿# Vouch
 
 **Meeting briefs where every line is proven.**
 
@@ -162,7 +162,7 @@ vouch/draft.py      step 4: the drafting prompt
 vouch/verify.py     step 5: quote, figure and relevance checks
 vouch/pipeline.py   runs the steps and reports each stage
 app/                FastAPI server (streams stages) and the web page
-tests/              85 offline tests: logic, pipeline and server (fake Tavily and Bifrost)
+tests/              88 offline tests: logic, pipeline and server (fake Tavily and Bifrost)
 eval/               evaluation subjects, tamper test, results
 bifrost/config.json gateway configuration
 ```
