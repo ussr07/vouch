@@ -101,7 +101,7 @@ The browser's Print gives a light, one-page version of the brief with every sect
 
 ## Architecture
 
-The animated diagram at the [top of this page](#vouch) shows one brief moving through Vouch. One FastAPI server runs the six stages and streams each one to the page as it finishes (Server-Sent Events). The page is plain HTML, CSS and JavaScript with no build step. Steps 2, 3 (the decision) and 5 are plain Python you can read in `vouch/filters.py`, `vouch/entity.py` and `vouch/verify.py`. The model's output never reaches the page without passing through them.
+The animated diagram at the top of this page shows one brief moving through Vouch. One FastAPI server runs the six stages and streams each one to the page as it finishes (Server-Sent Events). The page is plain HTML, CSS and JavaScript with no build step. Steps 2, 3 (the decision) and 5 are plain Python you can read in `vouch/filters.py`, `vouch/entity.py` and `vouch/verify.py`. The model's output never reaches the page without passing through them.
 
 ## How AI is used
 
