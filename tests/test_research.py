@@ -64,8 +64,9 @@ class PartialFailure(unittest.TestCase):
              mock.patch.object(research.cache, "put"):
             run = research.search("Acme", "company", datetime(2026, 11, 14))
         self.assertEqual([a for a, _ in run.failed], ["deals"])
-        self.assertEqual(len(run.sources), 3)
-        self.assertEqual(run.credits_used, 3)
+        others = len(research.ANGLES["company"]) - 1
+        self.assertEqual(len(run.sources), others)
+        self.assertEqual(run.credits_used, others)
 
     def test_every_search_failing_raises_the_real_error(self):
         from unittest import mock

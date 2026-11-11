@@ -44,7 +44,7 @@
     [/^never mentions/i, "Never names the subject"],
     [/not a normal web address/i, "Unsafe link"],
     [/^about a different/i, "About a different subject"],
-    [/^not read/i, "Not read: past the 20-article limit"],
+    [/^not read/i, "Not read: past the reading limit"],
     [/quote not found/i, "Quote not found word for word"],
     [/^figure\(s\)/i, "A figure isn't in the sources"],
     [/cites no real article|doesn't exist/i, "Cites no real article"],
@@ -79,10 +79,10 @@
     const passed = Math.max(0, found - filteredOut);
     const { stories } = briefNumbers(b);
     return [
-      { key: "found", label: "Found", value: found, unit: "articles", who: "Tavily, 4 news searches" },
+      { key: "found", label: "Found", value: found, unit: "articles", who: `Tavily, ${counts.searches || 4} news searches` },
       { key: "filtered", label: "Passed the filters", value: passed, unit: "articles", who: "Code rules" },
       { key: "subject", label: "About this subject", value: Math.max(0, passed - setAside), unit: "articles", who: "Model sorts, code decides" },
-      { key: "read", label: "Read by the AI", value: counts.shown_to_model || 0, unit: "articles", who: "The 20 newest" },
+      { key: "read", label: "Read by the AI", value: counts.shown_to_model || 0, unit: "articles", who: "The newest articles" },
       { key: "drafted", label: "Stories drafted", value: stories.drafted, unit: "stories", who: "Model, via Bifrost" },
       { key: "verified", label: "Verified", value: stories.verified, unit: "stories", who: "Code checks every quote" },
     ];
@@ -100,5 +100,39 @@
              first: revenue[0], latest: revenue[revenue.length - 1] };
   }
 
-  root.VouchStats = { POINT_REASON, briefNumbers, emptyMessage, reasonGroups, reasonLabel, funnelSteps, growthSeries };
+  // "Numbers to have ready" for the meeting: picked by code from figures that were already
+  // checked (market data or word-for-word news) and from the verified stories. No AI writes these.
+  function numbersToHave(b) {
+    const out = [];
+    const s = growthSeries(b.growth);
+    if (s) {
+      out.push({ kind: "revenue", year: s.latest.year, value: s.latest.value, currency: s.currency,
+                 change: s.latest.change, source_url: s.latest.source_url, source_name: s.latest.source_name });
+      if (s.revenue.length > 2) {
+        out.push({ kind: "span", from: s.first.year, to: s.latest.year,
+                   change: (s.latest.value - s.first.value) / Math.abs(s.first.value),
+                   source_url: s.latest.source_url, source_name: s.latest.source_name });
+      }
+      const profit = s.profit.find((p) => p.year === s.latest.year);
+      if (profit) {
+        out.push({ kind: "profit", year: profit.year, value: profit.value, currency: profit.currency,
+                   margin: profit.value / s.latest.value, source_url: profit.source_url, source_name: profit.source_name });
+      }
+    }
+    const stories = (b.stories || []).map((st, i) => ({ ...st, n: i + 1 }));
+    if (stories.length) {
+      const top = stories.reduce((a, z) => ((z.outlets || []).length > (a.outlets || []).length ? z : a));
+      if ((top.outlets || []).length > 1) {
+        out.push({ kind: "coverage", story: top.n, headline: top.headline, outlets: top.outlets.length });
+      }
+      const newest = stories.reduce((a, z) => (z.date > a.date ? z : a));
+      out.push({ kind: "latest", story: newest.n, headline: newest.headline, date: newest.date });
+    }
+    const n = briefNumbers(b);
+    if (n.stories.drafted) out.push({ kind: "checked", verified: n.stories.verified, drafted: n.stories.drafted });
+    return out;
+  }
+
+  root.VouchStats = { POINT_REASON, briefNumbers, emptyMessage, reasonGroups, reasonLabel, funnelSteps, growthSeries,
+                      numbersToHave };
 })(typeof window !== "undefined" ? window : globalThis);

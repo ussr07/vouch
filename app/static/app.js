@@ -282,7 +282,7 @@ function proofPanel(b) {
                        verify: "Verify", growth: "Growth" };
 
   const made = [
-    ["Search", `Tavily, ${plural(c.credits || 0, "credit")}` + (c.cache_hits ? `, ${c.cache_hits} of 4 searches from cache` : "")],
+    ["Search", `Tavily, ${plural(c.credits || 0, "credit")}` + (c.cache_hits ? `, ${c.cache_hits} of ${c.searches || 4} searches from cache` : "")],
     m && m.entity_check_by ? ["Same-subject check", `${m.entity_check_by}, ${m.entity_check_tokens.toLocaleString()} tokens`] : null,
     m ? ["Draft", `${m.served_by}${m.fallback ? " (backup model; the first choice was unavailable)" : ""}, ` +
                   `${(m.prompt_tokens + m.completion_tokens).toLocaleString()} tokens, ${m.seconds}s`] : null,
@@ -427,6 +427,36 @@ function kpiStrip(b) {
          meter(articles.found ? ((b.counts && b.counts.shown_to_model) || 0) / articles.found : 0, "brand")),
     tile("Left out", String(leftOut), "each with its reason", meter(articles.found ? b.ledger.articles.length / articles.found : 0, "deep")),
     tile("Made in", `${b.seconds}s`, `${plural(Object.keys(b.timings || {}).length || 5, "stage")}, checked in code`, null));
+}
+
+// "Numbers to have ready": figures already checked, each with where it came from.
+function numbersCard(b) {
+  const items = VouchStats.numbersToHave(b);
+  if (!items.length) return null;
+  const source = (it) => it.source_url
+    ? h("a", { href: it.source_url, target: "_blank", rel: "noopener", text: it.source_name })
+    : (it.source_name ? it.source_name : null);
+  const story = (n) => h("a", { href: `#story-${n}`, text: `story ${n}` });
+  const tile = (label, value, note, from, tone = "") => h("li", { class: `ready ${tone}` },
+    h("span", { class: "ready-label", text: label }),
+    h("span", { class: "ready-value", text: value }),
+    note ? h("span", { class: "ready-note", text: note }) : null,
+    from ? h("span", { class: "ready-src" }, "From ", from) : null);
+  return h("section", { class: "part ready-card", "aria-labelledby": "ready-title" },
+    h("h3", { id: "ready-title", text: "Numbers to have ready" }),
+    h("ul", { class: "ready-list" }, items.map((it) => {
+      switch (it.kind) {
+        case "revenue": return tile(`Revenue, ${fy(it.year)}`, money(it.value, it.currency),
+                                    it.change != null ? `${pct(it.change)} on ${fy(it.year - 1)}` : "", source(it));
+        case "span": return tile(`Revenue, ${fy(it.from)} to ${fy(it.to)}`, pct(it.change), "growth across the years shown", source(it), "ready-brand");
+        case "profit": return tile(`Net profit, ${fy(it.year)}`, money(it.value, it.currency),
+                                   `${(it.margin * 100).toFixed(1)}% of revenue`, source(it), "ready-sand");
+        case "coverage": return tile("Most-covered story", `${it.outlets} outlets`, it.headline, story(it.story));
+        case "latest": return tile("Most recent news", fmtDate(it.date), it.headline, story(it.story));
+        case "checked": return tile("Checked for you", `${it.verified} of ${it.drafted}`, "drafted stories passed every check", null, "ready-brand");
+        default: return null;
+      }
+    })));
 }
 
 function storyList(b) {
@@ -577,6 +607,7 @@ function renderBrief(b) {
 
   const meetingView = h("section", { class: "ws-view view-meeting", "data-view": "meeting", "aria-labelledby": "meeting-title" },
     h("h3", { id: "meeting-title", class: "view-title", text: "Your meeting" }),
+    numbersCard(b),
     b.talking_points.length || b.open_questions.length
       ? h("div", { class: "two-up" },
           b.talking_points.length ? h("section", { class: "part" }, h("h3", { text: "Worth raising" }), pointList(b.talking_points)) : null,

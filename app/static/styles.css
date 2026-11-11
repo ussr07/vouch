@@ -720,6 +720,30 @@ button:disabled { background: #7C879A; cursor: progress; }
   .ws-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* "Numbers to have ready": a row of checked figures above the meeting lists. */
+.ready-card {
+  margin: 0 0 var(--space-2); padding: var(--space-4);
+  border: 1px solid var(--color-card-line); border-radius: var(--radius-panel);
+  background: radial-gradient(90% 140% at 100% 0%, var(--color-ember) 0%, var(--color-card) 55%);
+}
+.ready-card > h3 { margin-top: 0; }
+.ready-list {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: var(--space-1);
+}
+.ready {
+  min-width: 0; display: grid; align-content: start; gap: var(--space-0);
+  padding: var(--space-3); border-radius: var(--radius-card); background: var(--color-card-2);
+  border: 1px solid var(--color-card-line);
+}
+.ready-label { font-size: var(--fs-small); color: var(--r-text-2); }
+.ready-value { font: var(--fw-medium) var(--fs-card-value)/var(--lh-snug) var(--font-body); color: var(--color-white); }
+.ready-brand .ready-value { color: var(--color-brand); }
+.ready-sand .ready-value { color: var(--color-sand); }
+.ready-note { font: var(--fw-regular) var(--fs-small)/var(--lh-snug) var(--font-display); color: var(--r-text); }
+.ready-src { font-size: var(--fs-tick); color: var(--r-text-2); }
+.ready-src a { color: var(--color-sand); }
+
 /* ---- One motion moment: the charts draw in once ---- */
 @media (prefers-reduced-motion: no-preference) {
   .bar rect { transform-box: fill-box; transform-origin: bottom;
@@ -766,7 +790,7 @@ button:disabled { background: #7C879A; cursor: progress; }
     --r-warning: var(--struck); --r-strike: var(--struck);
     padding: 0; max-width: none;
   }
-  .entry, .analysis, .page-bar, .hero-growth, .ws-side, .ws-status, .ws-kpis, .story-list, .ledger-chips, .panel, .ledger, .print-btn, .sources, .key { display: none !important; }
+  .entry, .analysis, .page-bar, .hero-growth, .ready-card, .ws-side, .ws-status, .ws-kpis, .story-list, .ledger-chips, .panel, .ledger, .print-btn, .sources, .key { display: none !important; }
   .hero { display: block; min-height: 0; padding: 0; background: none; border-radius: 0; }
   .hero h2 { color: var(--r-text); }
   .result { max-width: none; }

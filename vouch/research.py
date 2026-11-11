@@ -22,11 +22,14 @@ ANGLES = {
         "launches": "{name} launches new product OR announces",
         "people": "{name} appoints OR hires OR CEO OR executive",
         "deals": "{name} funding OR acquisition OR partnership OR deal",
+        "results": "{name} results OR revenue OR earnings OR profit",
+        "strategy": "{name} strategy OR expansion OR customers OR AI",
     },
     "person": {
         "news": '"{name}" news',
         "role": '"{name}" joins OR appointed OR named OR steps down',
         "public": '"{name}" interview OR talk OR podcast OR said',
+        "ventures": '"{name}" invests OR backs OR board OR founded',
     },
 }
 
@@ -79,7 +82,7 @@ def window_for(meeting_at: datetime, today: date | None = None) -> tuple[date, d
     return start, min(meeting_at.date(), today)
 
 
-def search(name: str, kind: str, meeting_at: datetime, max_results: int = 8,
+def search(name: str, kind: str, meeting_at: datetime, max_results: int = 20,
            about: str = "") -> SearchRun:
     if kind not in ANGLES:
         raise ValueError(f"kind must be one of {list(ANGLES)}, got {kind!r}")
@@ -97,7 +100,7 @@ def search(name: str, kind: str, meeting_at: datetime, max_results: int = 8,
             "query": template.format(name=f"{name} ({about})" if about else name),
             "topic": "news",
             "search_depth": "basic",   # 1 credit; "advanced" costs 2
-            "max_results": max_results,
+            "max_results": max_results,      # up to 20 results still cost 1 credit      # up to 20 results still cost 1 credit
             "start_date": start.isoformat(),
             "end_date": end.isoformat(),
         }

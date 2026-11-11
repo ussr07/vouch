@@ -2,6 +2,7 @@
 from vouch.draft import MAX_ARTICLES
 from vouch.filters import is_web_link
 from vouch.pipeline import Brief
+from vouch.research import ANGLES
 
 
 def _link(url: str) -> str | None:
@@ -44,7 +45,8 @@ def brief_to_dict(b: Brief) -> dict:
         "counts": {"found": len(b.run.sources),
                    "kept": len(b.entity.kept) if b.entity and not b.entity.needs_choice else len(b.filtered.kept),
                    "shown_to_model": b.articles_shown_to_model, "verified": len(c.stories),
-                   "credits": b.run.credits_used, "cache_hits": b.run.cache_hits},
+                   "credits": b.run.credits_used, "cache_hits": b.run.cache_hits,
+                   "searches": len(ANGLES.get(b.kind, {}))},
         "model": None if b.model_call is None else {
             "served_by": b.model_call.served_by, "fallback": b.model_call.used_fallback,
             "prompt_tokens": b.model_call.prompt_tokens,

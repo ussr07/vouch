@@ -29,6 +29,7 @@ process.stdout.write(JSON.stringify({
   funnel: ctx.VouchStats.funnelSteps(brief),
   reasons: ctx.VouchStats.reasonGroups(brief),
   growth: ctx.VouchStats.growthSeries(brief.growth),
+  ready: ctx.VouchStats.numbersToHave(brief),
 }));
 """
 
@@ -121,7 +122,7 @@ class Panels(unittest.TestCase):
     def test_every_reason_is_counted_under_a_readable_label(self):
         reasons = {r["label"]: r["count"] for r in run_stats(self.BRIEF)["reasons"]}
         self.assertEqual(reasons["Not a news article"], 5)
-        self.assertEqual(reasons["Not read: past the 20-article limit"], 4)
+        self.assertEqual(reasons["Not read: past the reading limit"], 4)
         self.assertEqual(reasons["About a different subject"], 1)
         self.assertEqual(reasons["Point not linked to a verified story"], 1)
         self.assertEqual(sum(reasons.values()), 15)
@@ -132,6 +133,26 @@ class Panels(unittest.TestCase):
         self.assertIsNone(g["revenue"][0]["change"])
         self.assertAlmostEqual(g["revenue"][2]["change"], 0.10)
         self.assertEqual((g["first"]["year"], g["latest"]["year"], g["currency"]), (2023, 2025, "INR"))
+
+    def test_numbers_to_have_ready_come_from_checked_figures(self):
+        brief = {**self.BRIEF, "stories": [
+            {**story(1), "headline": "small", "date": "2026-11-01"},
+            {**story(5), "headline": "big", "date": "2026-10-20"},
+            {**story(2), "headline": "newest", "date": "2026-11-09"}]}
+        ready = {r["kind"]: r for r in run_stats(brief)["ready"]}
+        self.assertEqual((ready["revenue"]["year"], ready["revenue"]["value"]), (2025, 110.0))
+        self.assertAlmostEqual(ready["span"]["change"], 110 / 80 - 1)
+        self.assertAlmostEqual(ready["profit"]["margin"], 20 / 110)
+        self.assertEqual((ready["coverage"]["story"], ready["coverage"]["outlets"]), (2, 5))
+        self.assertEqual((ready["latest"]["story"], ready["latest"]["date"]), (3, "2026-11-09"))
+        self.assertEqual((ready["checked"]["verified"], ready["checked"]["drafted"]), (3, 4))
+
+    def test_no_growth_no_invented_figures(self):
+        brief = {**self.BRIEF, "growth": None, "stories": [{**story(1), "headline": "only", "date": "2026-11-01"}]}
+        kinds = [r["kind"] for r in run_stats(brief)["ready"]]
+        self.assertNotIn("revenue", kinds)
+        self.assertNotIn("coverage", kinds)          # one outlet is not "most covered"
+        self.assertIn("latest", kinds)
 
     def test_one_year_is_not_growth(self):
         brief = {**self.BRIEF, "growth": {"figures": [{"year": 2025, "metric": "revenue", "value": 1.0, "currency": "USD"}]}}

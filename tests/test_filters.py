@@ -41,6 +41,23 @@ class Mentions(unittest.TestCase):
         self.assertTrue(mentions("Infosys", "INFOSYS posts Q2 results"))
 
 
+class NameSpellings(unittest.TestCase):
+    def test_spacing_and_dots_between_words_dont_matter(self):
+        for headline in ("JPMorgan raises its forecast", "J.P. Morgan raises its forecast",
+                         "JP Morgan raises its forecast", "JP-Morgan raises its forecast"):
+            self.assertTrue(mentions("JP Morgan", headline), headline)
+
+    def test_initials_may_carry_dots(self):
+        self.assertTrue(mentions("TCS", "T.C.S. wins a deal"))
+        self.assertTrue(mentions("TCS", "TCS wins a deal"))
+
+    def test_still_whole_words_only(self):
+        self.assertFalse(mentions("JP Morgan", "JP Morganite gemstones"))
+        self.assertFalse(mentions("Meta", "metadata standards"))
+        self.assertFalse(mentions("TCS", "ATCS reports"))
+        self.assertFalse(mentions("", "anything"))
+
+
 class NormaliseUrl(unittest.TestCase):
     def test_same_page_variants(self):
         a = normalise_url("https://www.example.com/story/")

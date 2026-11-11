@@ -71,9 +71,25 @@ def mentions(name: str, text: str) -> bool:
     """True if the full name appears as whole words (case-insensitive).
 
     Whole words matters: 'Meta' must not match 'metadata'.
+    Spacing and dots between the words don't: news writes "JPMorgan", "J.P. Morgan" and
+    "JP Morgan" for the same bank (a brief on "JP Morgan" lost 23 of 32 articles to this).
     """
-    pattern = r"(?<!\w)" + re.escape(name.strip()) + r"(?!\w)"
-    return re.search(pattern, text, flags=re.IGNORECASE) is not None
+    return re.search(name_pattern(name), text, flags=re.IGNORECASE) is not None
+
+
+def name_pattern(name: str) -> str:
+    """Whole-word pattern for a name. Words may be joined by spaces, dots or hyphens, or
+    run together; short initials ("JP", "TCS") may carry dots ("J.P.", "T.C.S.")."""
+    parts = []
+    for word in name.split():
+        letters = word.replace(".", "")
+        if letters.isalpha() and len(letters) <= 4 and word.upper() == word:
+            parts.append(r"\.?".join(re.escape(ch) for ch in letters) + r"\.?")
+        else:
+            parts.append(re.escape(word))
+    if not parts:
+        return r"(?!)"                                  # an empty name matches nothing
+    return r"(?<!\w)" + r"[\s.\-]*".join(parts) + r"(?!\w)"
 
 
 def names_subject(run: SearchRun, source: Source) -> bool:

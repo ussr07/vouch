@@ -35,16 +35,16 @@ def fake_draft(name, kind, goal, day, kept):
 
 class NothingDroppedSilently(unittest.TestCase):
     def test_articles_past_the_limit_are_recorded(self):
-        with mock.patch.object(pipeline, "search", return_value=fake_run(25)), \
+        with mock.patch.object(pipeline, "search", return_value=fake_run(MAX_ARTICLES + 5)), \
              mock.patch.object(pipeline, "resolve", side_effect=fake_resolve), \
              mock.patch.object(pipeline, "draft", side_effect=fake_draft):
             b = pipeline.make_brief("Acme", "company", datetime(2026, 11, 1))
         self.assertEqual(b.articles_shown_to_model, MAX_ARTICLES)
-        self.assertEqual(len(b.not_read), 25 - MAX_ARTICLES)
+        self.assertEqual(len(b.not_read), 5)
         # every kept article is either shown to the model or recorded as not read
         shown = {k.source.url for k in b.draft_articles}
         missing = {k.source.url for k in b.not_read}
-        self.assertEqual(shown | missing, {s.url for s in fake_run(25).sources})
+        self.assertEqual(shown | missing, {s.url for s in fake_run(MAX_ARTICLES + 5).sources})
         self.assertFalse(shown & missing)
 
 

@@ -6,7 +6,7 @@ Give Vouch a company or person and a meeting date. It reads the news from the 30
 
 Built for the Geek Room Global AI Hackathon 2026, problem statement **Tavily Research Agent**, using **Tavily** for live research and **Bifrost by Maxim AI** as the model gateway.
 
-![Vouch, clockwise from top left: the question as a sentence, the live analysis screen with each stage and its real counts, a verified story with its quote, outlet count and date, and the brief's header with its numbers](docs/screenshot.jpg)
+![Vouch, clockwise from top left: the question as a sentence, the brief overview with its checked numbers and growth graph, the Your meeting view with numbers to have ready, and a verified story with its quote, outlet count and date](docs/screenshot.jpg)
 
 ## Why it exists
 
@@ -25,10 +25,10 @@ AI research tools write confident summaries, and the reader has no quick way to 
 
 | Step | Who does it | What happens |
 |---|---|---|
-| 1. Search | Tavily | Four targeted news searches (news, launches, people moves, deals) over the 30 days preceding the meeting (ending today if the meeting is still ahead, since later news doesn't exist yet). Results are cached so reruns cost no credits. |
+| 1. Search | Tavily | Six targeted news searches for a company (news, launches, people moves, deals, results, strategy; four for a person), up to 20 results each, over the 30 days preceding the meeting (ending today if the meeting is still ahead, since later news doesn't exist yet). Results are cached so reruns cost no credits. |
 | 2. Filter | Code | Drops non-news pages, duplicates, undated or out-of-window articles, and articles that don't name the subject in the headline. |
 | 3. Which one? | Model sorts, code decides | The model groups articles by real-world entity. If one entity has 75%+ of articles it is kept; otherwise Vouch stops and asks the user which one they mean (it found 7 different "Mercury"s in one search). |
-| 4. Draft | Model, via Bifrost | Groups articles into stories and writes talking points and questions for the meeting type (investor, sales, partnership, hiring, general). It must cite article numbers and copy one exact supporting quote per story. |
+| 4. Draft | Model, via Bifrost | Reads the 30 newest articles, groups them into up to 10 stories (one per distinct event) and writes 6 to 8 talking points and 6 to 8 questions for the meeting type (investor, sales, partnership, hiring, general). It must cite article numbers and copy one exact supporting quote per story. |
 | 5. Verify | Code | Removes a story if its quote isn't found word for word in the cited article, if any figure in it doesn't appear in its sources, or if the quote shares nothing with the claim. Dates and outlet counts are computed in code. Stories whose quote dates the event before the window are flagged as older events. |
 | 6. Growth | Market data or news, checked in code | Yearly revenue and net profit. A listed company's figures come from Yahoo Finance; otherwise one news search, and code keeps a figure only if its sentence is found word for word in the article and holds that number and year. A person gets their company's growth, if the articles name it. |
 
@@ -36,13 +36,13 @@ While Vouch works, an analysis screen shows each stage live as it finishes, with
 
 - **Overview**: the subject and the growth graph, revenue and net profit by year, each bar linked to its source;
 - **Stories**: the verified stories; each with its quote, the site it was found in, and its flags (quote verified, single source, older event), shown as a mark plus words, never colour alone;
-- **Your meeting**: what to raise and what to ask, each linked to its story;
+- **Your meeting**: numbers to have ready (revenue, growth, margin, most-covered and latest story, all from checked figures), then what to raise and what to ask, each linked to its story;
 - **Left out**: every rejected article and every AI-written line that failed a check, struck through, with the reason, filterable by reason;
 - **The proof**: every stage with its real counts, why things were left out, which model wrote it through Bifrost, its tokens and time, and the Tavily credits used.
 
 The browser's Print gives a light, one-page brief with every section.
 
-![The rejection ledger: rejected articles and an AI-written claim struck through, each with its reason](docs/ledger.jpg)
+![What we left out: every rejected article and AI-written line, grouped by reason, each struck through with its reason](docs/ledger.jpg)
 
 ## Architecture
 
@@ -69,7 +69,7 @@ Steps 2, 3 (the decision) and 5 are plain Python you can read in `vouch/filters.
 
 ## How Tavily is used
 
-- `search` with `topic="news"`, `search_depth="basic"` (1 credit), `start_date`/`end_date` set to the exact 30-day window, 8 results per search.
+- `search` with `topic="news"`, `search_depth="basic"` (1 credit), `start_date`/`end_date` set to the exact 30-day window, 20 results per search (still 1 credit).
 - Tavily's `published_date` and article text are the only evidence the brief may use. Quotes are verified against that text.
 - When the user says which entity they mean, the hint is added to every query (`Mercury (the startup bank) news`), which pulls in the right company far more often.
 - A SQLite cache (`data/vouch.db`, 24-hour expiry) means identical searches are never paid for twice.
@@ -181,7 +181,7 @@ Open http://localhost:8000.
 Other commands:
 
 ```bash
-python -m unittest                                         # offline tests, no credits (8 need Node; skipped without it)
+python -m unittest                                         # offline tests, no credits (10 need Node; skipped without it)
 python scripts/try_brief.py "Zerodha" company 2026-11-14 partnership
 python eval/run_eval.py                                    # the measurements above
 ```
@@ -203,7 +203,7 @@ vouch/pipeline.py   runs the steps and reports each stage
 vouch/growth.py     step 6: yearly revenue and profit, from market data or checked news
 app/                FastAPI server (streams stages) and the web page (app/static: search, analysis, brief)
 app/static/stats.js the brief's numbers, worked out from its own data (tested under Node)
-tests/              118 offline tests: logic, pipeline, growth, server (fake Tavily and Bifrost) and the brief's numbers
+tests/              122 offline tests: logic, pipeline, growth, server (fake Tavily and Bifrost) and the brief's numbers
 eval/               evaluation subjects, tamper test, results
 bifrost/config.json gateway configuration
 ```

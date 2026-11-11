@@ -8,8 +8,8 @@ from datetime import date
 from vouch.filters import Kept
 from vouch.llm import CallInfo, chat_json
 
-MAX_ARTICLES = 20      # keeps the prompt inside free-tier token limits
-SNIPPET_CHARS = 700    # per article
+MAX_ARTICLES = 30      # the newest 30; snippets are shorter so the prompt stays inside free-tier limits
+SNIPPET_CHARS = 600    # per article
 
 GOALS = {
     "sales": "a sales conversation: find needs, priorities and timing",
@@ -20,7 +20,9 @@ GOALS = {
     "general": "a general introductory meeting",
 }
 
-SYSTEM = """You prepare one-page pre-meeting briefings from news articles.
+SYSTEM = """You prepare thorough pre-meeting briefings from news articles.
+Cover every distinct event the articles report: a reader should not miss anything
+important that happened to this subject in the window.
 Rules you must follow:
 - Use ONLY the numbered articles given. Never add facts from your own knowledge.
 - Group articles that report the same event into ONE story, and list EVERY
@@ -57,8 +59,10 @@ def build_prompt(name: str, kind: str, goal: str, meeting_day: date,
         f"Subject: {name} ({kind})\n"
         f"Meeting date: {meeting_day}\n"
         f"Meeting purpose: {GOALS.get(goal, GOALS['general'])}\n\n"
-        f"Write at most 6 stories (most important first), 3-4 talking points and "
-        f"3-4 open questions tailored to the meeting purpose.\n\n"
+        f"Write one story per distinct event, most important first: aim for 8-10 stories when "
+        f"the articles report that many different events (fewer only if they don't). Then "
+        f"6-8 talking points and 6-8 open questions tailored to the meeting purpose, spread "
+        f"across different stories; every one must list in story_ids the stories it rests on.\n\n"
         f"Reply in this JSON shape:\n{SCHEMA}\n\n"
         f"ARTICLES:\n" + "\n\n".join(lines)
     )
