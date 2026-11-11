@@ -8,12 +8,30 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400;0,500;0,700;1,400&family=Spectral:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/static/styles.css">
+<!-- Only the five letters of the wordmark's "raw" state, before they lock into Spectral. -->
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&text=Vouch&display=block" rel="stylesheet">
+<meta name="theme-color" content="#080808">
+<!-- A brief's own address (/brief/<id>) is the brief page: no search screen, decided before the first paint. -->
+<script>if (location.pathname.indexOf("/brief/") === 0) document.documentElement.classList.add("route-brief");</script>
+<link rel="stylesheet" href="/static/styles.css?v=6">
 </head>
 <body>
-<main class="page">
+<main>
+<!-- The entry: a dark instrument that takes the question. The brief prints on paper below it. -->
+<div class="entry">
+ <div class="entry-frame">
+  <nav class="nav" aria-label="Primary">
+    <ul>
+      <li><a href="/" aria-current="page">New brief</a></li>
+      <li><a href="#how">How it works</a></li>
+    </ul>
+  </nav>
+
   <header class="masthead">
-    <h1 class="wordmark">Vouch</h1>
+    <h1 class="wordmark">
+      <span class="sr-only">Vouch</span>
+      <span class="wm" aria-hidden="true"><span class="wm-l" data-c="V" style="--i:0"><span class="wm-raw">V</span><span class="wm-true">V</span></span><span class="wm-l" data-c="o" style="--i:1"><span class="wm-raw">o</span><span class="wm-true">o</span></span><span class="wm-l" data-c="u" style="--i:2"><span class="wm-raw">u</span><span class="wm-true">u</span></span><span class="wm-l" data-c="c" style="--i:3"><span class="wm-raw">c</span><span class="wm-true">c</span></span><span class="wm-l" data-c="h" style="--i:4"><span class="wm-raw">h</span><span class="wm-true">h</span></span></span>
+    </h1>
     <p class="tagline">Meeting briefs where every line is proven.</p>
   </header>
 
@@ -46,10 +64,10 @@
         </select>
       </label>
       meeting on
-      <label class="field">
+      <span class="keep"><label class="field">
         <span class="sr-only">Meeting date and time</span>
         <input id="meeting" name="meeting" type="datetime-local" required>
-      </label>.
+      </label>.</span>
     </p>
     <p class="which">
       <label for="about">Which one, if the name is shared?</label>
@@ -62,16 +80,53 @@
     </div>
   </form>
 
-  <ol id="progress" class="progress" aria-live="polite" hidden></ol>
-
-  <section id="result" class="result" hidden aria-labelledby="result-title"></section>
-
-  <section id="empty" class="empty">
+  <section id="how" class="how" aria-labelledby="how-title">
+    <h2 id="how-title">How it works</h2>
     <p>Vouch reads the last 30 days of news before your meeting, writes a one-page brief,
        then checks it in code. A line only stays if its quote is found word for word in a
        real article. Everything it throws out is listed, with the reason.</p>
   </section>
+ </div>
+</div>
+
+<!-- The analysis: its own screen while Vouch reads the news. The stages and counts are the server's own. -->
+<section id="analysis" class="analysis" hidden aria-labelledby="analysis-title">
+ <div class="analysis-frame">
+  <div class="analysis-top">
+    <span class="analysis-mark" aria-hidden="true">Vouch</span>
+    <p class="elapsed"><span class="sr-only">Time so far </span><span id="elapsed">0:00</span></p>
+  </div>
+
+  <header class="analysis-head">
+    <h2 id="analysis-title" class="subject" tabindex="-1"></h2>
+    <p id="analysis-context" class="analysis-context"></p>
+  </header>
+
+  <div class="stages">
+    <div id="meter" class="meter" role="progressbar" aria-label="Stages finished"
+         aria-valuemin="0" aria-valuemax="5" aria-valuenow="0"><span class="meter-fill"></span></div>
+    <ol id="progress" class="progress" aria-live="polite"></ol>
+    <p id="analysis-error" class="analysis-error" role="alert" hidden></p>
+  </div>
+
+  <div class="analysis-actions">
+    <button id="cancel" type="button" class="btn-quiet">Cancel</button>
+  </div>
+ </div>
+</section>
+
+<div class="page">
+  <header class="page-bar">
+    <span class="page-bar-mark">Vouch</span>
+    <div class="page-bar-actions">
+      <span id="print-slot"></span>
+      <a class="btn-quiet" href="/">New brief</a>
+    </div>
+  </header>
+  <section id="result" class="result" hidden aria-labelledby="result-title"></section>
+</div>
 </main>
-<script src="/static/app.js"></script>
+<script src="/static/stats.js?v=1"></script>
+<script src="/static/app.js?v=7"></script>
 </body>
 </html>

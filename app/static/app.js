@@ -46,25 +46,84 @@ const STAGES = {
   verify: { done: (d) => `Checked every quote: ${d.verified} verified, ${d.removed} removed` },
 };
 
+// The five stages in the order the server runs them, and who does each one.
+const STAGE_ORDER = [
+  ["search", "Search", "Tavily"],
+  ["filter", "Filter", "Code"],
+  ["entity", "Same subject", "Model sorts, code decides"],
+  ["draft",  "Draft", "Model, via Bifrost"],
+  ["verify", "Verify", "Code"],
+];
+
+// Every stage is listed from the start, waiting, so the run reads as a known sequence.
+function resetStages() {
+  $("progress").replaceChildren(...STAGE_ORDER.map(([key, step, who]) =>
+    h("li", { "data-stage": key, class: "pending" },
+      h("span", { class: "mark", "aria-hidden": "true" }),
+      h("span", { class: "step", text: step }),
+      h("span", { class: "who", text: who }),
+      h("span", { class: "label", text: "Waiting" }))));
+  updateMeter();
+}
+
+function updateMeter() {
+  const done = $("progress").querySelectorAll("li.done").length;
+  $("meter").setAttribute("aria-valuenow", done);
+  $("meter").style.setProperty("--done", done / STAGE_ORDER.length);
+}
+
 function showStep(stage, data) {
-  const list = $("progress");
-  let li = list.querySelector(`[data-stage="${stage}"]`);
-  if (!li) {
-    li = h("li", { "data-stage": stage }, h("span", { class: "mark", "aria-hidden": "true" }), h("span"));
-    list.append(li);
-  }
-  const spec = STAGES[stage][data.status];
+  const li = $("progress").querySelector(`[data-stage="${stage}"]`);
+  const spec = STAGES[stage] && STAGES[stage][data.status];
+  if (!li || !spec) return;
   li.className = data.status;
-  li.querySelector(".mark").textContent = data.status === "done" ? "✓" : "";
-  li.lastChild.textContent = typeof spec === "function" ? spec(data) : spec;
+  li.querySelector(".label").textContent = typeof spec === "function" ? spec(data) : spec;
+  updateMeter();
 }
 
 function showFailure(message) {
-  const list = $("progress");
-  list.hidden = false;
-  list.querySelectorAll("li.running").forEach((li) => li.remove());
-  list.append(h("li", { class: "failed" }, h("span", { class: "mark", "aria-hidden": "true", text: "×" }),
-                h("span", { text: message })));
+  $("progress").querySelectorAll("li.running").forEach((li) => {
+    li.className = "stopped";
+    li.querySelector(".label").textContent = "Stopped";
+  });
+  $("analysis-error").textContent = message;
+  $("analysis-error").hidden = false;
+  $("cancel").textContent = "Back to the question";
+}
+
+// ---------- screens: the question, the analysis, the brief ----------
+let clock = null;
+
+function showAnalysis(name, goal, meeting) {
+  $("analysis-title").textContent = name;
+  $("analysis-title").dataset.name = name;   // the glow layer copies the name (CSS attr, never parsed as HTML)
+  $("analysis-context").textContent =
+    `${GOAL_LABEL[goal] || "General"} meeting on ${fmtDate(meeting.slice(0, 10))} at ${meeting.slice(11, 16)}. ` +
+    "Reading the last 30 days of news, then checking every quote in code.";
+  $("analysis-error").hidden = true;
+  $("cancel").textContent = "Cancel";
+  resetStages();
+
+  const started = Date.now();
+  const tick = () => {
+    const s = Math.floor((Date.now() - started) / 1000);
+    $("elapsed").textContent = `${Math.floor(s / 60)}:${pad(s % 60)}`;
+  };
+  tick();
+  clearInterval(clock);
+  clock = setInterval(tick, 1000);
+
+  document.querySelector(".entry").hidden = true;
+  $("result").hidden = true;
+  $("analysis").hidden = false;
+  window.scrollTo(0, 0);
+  $("analysis-title").focus({ preventScroll: true });
+}
+
+function showQuestion() {
+  clearInterval(clock);
+  $("analysis").hidden = true;
+  document.querySelector(".entry").hidden = false;
 }
 
 // ---------- the brief ----------
@@ -85,13 +144,114 @@ function storyRow(s, i) {
       h("h4", {}, h("span", { class: "num", text: `${i + 1}.` }), s.headline),
       h("p", { class: "summary", text: s.summary }),
       quote, sources),
+    // The proof margin. Each flag is a drawn icon (CSS, by class) plus its words, never colour alone.
     h("div", { class: "margin" },
-      h("span", { text: `Reported ${fmtDate(s.date)}` }),
-      s.older_event ? h("span", { class: "older", text: `Older event: ${s.older_event}` }) : null,
+      h("span", { class: "flag reported", text: `Reported ${fmtDate(s.date)}` }),
+      s.older_event ? h("span", { class: "flag older", text: `Older event: ${s.older_event}` }) : null,
       s.outlets.length > 1
-        ? h("span", { text: `Reported by ${s.outlets.length} outlets` })
-        : h("span", { class: "single", text: "Single source" }),
-      h("span", { class: "check", text: "✓ Quote verified" })));
+        ? h("span", { class: "flag outlets", text: `Reported by ${s.outlets.length} outlets` })
+        : h("span", { class: "flag single", text: "Single source" }),
+      h("span", { class: "flag check", text: "Quote verified" })));
+}
+
+// ---------- the numbers: drawn from this brief's own counts and stories ----------
+const SVG_NS = "http://www.w3.org/2000/svg";
+function svg(tag, attrs = {}, ...children) {
+  const el = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "text") el.textContent = v;
+    else el.setAttribute(k, v);
+  }
+  for (const c of children.flat(Infinity)) if (c) el.append(c);
+  return el;
+}
+
+// One whole split into its parts: a thin bar, with the figures in the legend under it.
+// The bar is aria-hidden; the legend carries every number in words.
+function splitBar(parts) {
+  const total = parts.reduce((sum, p) => sum + p.value, 0);
+  if (!total) return [];   // nothing to split: the figure above says so
+  let x = 0;
+  const bar = total ? svg("svg", { class: "split", width: "100%", height: "10", "aria-hidden": "true" },
+    parts.filter((p) => p.value > 0).map((p) => {
+      const w = (p.value / total) * 100;
+      const rect = svg("rect", { class: `seg seg-${p.kind}`, x: `${x}%`, y: 0, width: `${w}%`, height: 10, rx: 2 });
+      x += w;
+      return rect;
+    })) : null;
+  return [bar, h("ul", { class: "legend" }, parts.map((p) =>
+    h("li", { class: `legend-item legend-${p.kind}` }, h("span", { class: "swatch", "aria-hidden": "true" }),
+      h("strong", { text: String(p.value) }), ` ${p.name}`)))];
+}
+
+// When each story was reported, across the brief's own news window. One numbered mark per
+// story, linking to it; filled for several outlets, hollow for a single source.
+function timeline(b) {
+  const day = (iso) => Date.parse(`${iso}T00:00:00Z`) / 86400000;
+  const start = day(b.window.start), span = Math.max(1, day(b.window.end) - start);
+  const pts = b.stories.map((st, i) => ({ n: i + 1, st, x: Math.min(1, Math.max(0, (day(st.date) - start) / span)) }));
+  // Stories reported close together stack upward instead of overlapping.
+  const lastX = [];
+  for (const p of [...pts].sort((a, c) => a.x - c.x)) {
+    let level = 0;
+    while (lastX[level] !== undefined && p.x - lastX[level] < TIMELINE.minGap) level++;
+    lastX[level] = p.x;
+    p.level = level;
+  }
+  const { r, row, top } = TIMELINE;
+  const base = top + r + (lastX.length - 1) * row;
+  const axisY = base + r + TIMELINE.stemGap;
+
+  return h("div", { class: "stat stat-wide" },
+    h("h4", { class: "stat-title", id: "when-title", text: "When it was reported" }),
+    h("div", { class: "timeline-wrap" },
+      svg("svg", { class: "timeline", width: "100%", height: axisY + TIMELINE.tickBand, role: "group",
+                   "aria-labelledby": "when-title" },
+        svg("line", { class: "axis", x1: "0%", x2: "100%", y1: axisY, y2: axisY }),
+        svg("text", { class: "tick", x: "0%", y: axisY + TIMELINE.tickOffset, "text-anchor": "start", text: fmtDate(b.window.start) }),
+        svg("text", { class: "tick", x: "100%", y: axisY + TIMELINE.tickOffset, "text-anchor": "end", text: fmtDate(b.window.end) }),
+        pts.map((p) => {
+          const cx = `${p.x * 100}%`, cy = base - p.level * row;
+          const multi = p.st.outlets.length > 1;
+          const said = `Story ${p.n}, reported ${fmtDate(p.st.date)}, ` +
+                       (multi ? `${p.st.outlets.length} outlets` : "single source") +
+                       (p.st.older_event ? `, older event: ${p.st.older_event}` : "");
+          return svg("a", { class: `pt ${multi ? "pt-multi" : "pt-single"}`, href: `#story-${p.n}`, "aria-label": said,
+                            style: `--i:${p.n - 1}` },
+            svg("title", { text: `${said}. ${p.st.headline}` }),
+            svg("line", { class: "stem", x1: cx, x2: cx, y1: cy + r, y2: axisY }),
+            svg("circle", { cx, cy, r }),
+            svg("text", { x: cx, y: cy, dy: "0.35em", "text-anchor": "middle", text: String(p.n) }));
+        }))),
+    h("ul", { class: "legend" },
+      h("li", { class: "legend-item legend-a" }, h("span", { class: "swatch dot", "aria-hidden": "true" }), "Several outlets"),
+      h("li", { class: "legend-item legend-b" }, h("span", { class: "swatch ring", "aria-hidden": "true" }), "Single source")));
+}
+const TIMELINE = { r: 10, row: 24, top: 6, stemGap: 10, tickBand: 26, tickOffset: 19, minGap: 0.07 };
+
+// The numbers panel visualises the counts line in the header; it doesn't restate them as
+// headline figures. Each chart counts one unit only: articles with articles, stories with stories.
+function statsPanel(b) {
+  const { articles: a, stories: s } = VouchStats.briefNumbers(b);
+  return h("section", { class: "stats", "aria-labelledby": "stats-title" },
+    h("h3", { id: "stats-title", class: "sr-only", text: "This brief in numbers" }),
+    h("div", { class: "stat" },
+      h("h4", { class: "stat-title", text: "Articles" }),
+      a.found
+        ? splitBar([{ name: "kept", value: a.kept, kind: "a" }, { name: "filtered out", value: a.filteredOut, kind: "b" }])
+        : h("p", { class: "stat-empty", text: "No articles found in this news window." })),
+    h("div", { class: "stat" },
+      h("h4", { class: "stat-title", text: "Stories" }),
+      s.drafted
+        ? [splitBar([{ name: "verified", value: s.verified, kind: "a" }, { name: "removed by checks", value: s.removed, kind: "b" }]),
+           s.verified ? [h("h5", { class: "stat-sub", text: "Verified stories, by source" }),
+                         splitBar([{ name: "several outlets", value: s.multi, kind: "a" },
+                                   { name: "single source", value: s.single, kind: "b" }])] : null,
+           s.older ? h("p", { class: "stat-note flag older",
+                              text: `${s.older} ${s.older === 1 ? "is an older event" : "are older events"}` }) : null]
+        : h("p", { class: "stat-empty", text: a.kept ? "The AI drafted no stories from the kept articles."
+                                                     : "No stories: no article passed the filters." })),
+    s.verified ? timeline(b) : null);
 }
 
 function pointList(points) {
@@ -130,6 +290,7 @@ function ledger(l) {
 
 function renderChoices(b) {
   const r = $("result");
+  $("print-slot").replaceChildren();   // a question, not a brief: nothing to print
   r.replaceChildren(h("section", { class: "choose", "aria-labelledby": "result-title" },
     h("h3", { id: "result-title", text: `Which ${b.subject.name} do you mean?` }),
     h("p", { text: `The news mentions ${b.choices.length} different subjects with this name. ` +
@@ -142,7 +303,7 @@ function renderChoices(b) {
     $("ask").requestSubmit();
   }));
   r.hidden = false;
-  $("empty").hidden = true;
+  window.scrollTo(0, 0);
 }
 
 function renderBrief(b) {
@@ -168,11 +329,11 @@ function renderBrief(b) {
       "\u201cOlder event\u201d means the news is recent but the event isn't. " +
       "Claims that failed a check are listed under What we left out." }) : null));
 
+  r.append(statsPanel(b));
+
   if (!b.stories.length) {
     r.append(h("section", { class: "part" },
-      h("p", { class: "nothing", text: c.kept
-        ? "No story survived the checks, so there's nothing we can vouch for. The ledger below shows why."
-        : "No recent news about this subject passed the filters. Check the spelling, or try the full name." })));
+      h("p", { class: "nothing", text: VouchStats.emptyMessage(b) })));
   } else {
     r.append(h("section", { class: "part", "aria-labelledby": "what-title" },
       h("h3", { id: "what-title", text: "What happened" }),
@@ -182,20 +343,25 @@ function renderBrief(b) {
       b.open_questions.length ? h("section", { class: "part" }, h("h3", { text: "Questions to ask" }), pointList(b.open_questions)) : null));
   }
 
-  r.append(ledger(b.ledger));
-  const printBtn = h("button", { type: "button", class: "print-btn", text: "Print or save as PDF" });
-  printBtn.addEventListener("click", () => window.print());
-  r.querySelector(".brief-head").append(printBtn);
+  const left = ledger(b.ledger);
+  if (left) r.append(left);   // append(null) would print the word "null"
 
-  if (b.model) {
-    r.append(h("p", { class: "machine", text:
-      `Written by ${b.model.served_by}${b.model.fallback ? " (backup model, primary was unavailable)" : ""} via the Bifrost gateway, ` +
-      `${(b.model.prompt_tokens + b.model.completion_tokens + b.model.entity_check_tokens).toLocaleString()} tokens, ${b.seconds}s in total. ` +
-      `Search by Tavily (${plural(c.credits, "credit")}).` }));
-  }
+  // How the brief was made: which model wrote it through Bifrost, and the Tavily search behind it.
+  // Kept on screen and in print; it's the record of the tools used.
+  r.append(h("p", { class: "machine", text:
+    (b.model
+      ? `Written by ${b.model.served_by}${b.model.fallback ? " (backup model, primary was unavailable)" : ""} via the Bifrost gateway, ` +
+        `${(b.model.prompt_tokens + b.model.completion_tokens + b.model.entity_check_tokens).toLocaleString()} tokens, ${b.seconds}s in total. `
+      : "No model was called: no article passed the filters. ") +
+    `Search by Tavily (${plural(c.credits || 0, "credit")}).` }));
+
+  // Print sits in the page bar, beside New brief.
+  const printBtn = h("button", { type: "button", class: "btn-quiet print-btn", text: "Print or save as PDF" });
+  printBtn.addEventListener("click", () => window.print());
+  $("print-slot").replaceChildren(printBtn);
   r.hidden = false;
-  $("empty").hidden = true;
-  r.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  document.title = `${b.subject.name}: Vouch brief`;
+  window.scrollTo(0, 0);
 }
 
 // ---------- submit ----------
@@ -210,21 +376,69 @@ $("ask").addEventListener("submit", (e) => {
   if (!meeting) { $("form-error").textContent = "Pick the meeting date and time."; $("meeting").focus(); return; }
 
   if (source) source.close();
-  $("progress").replaceChildren();
-  $("progress").hidden = false;
-  $("result").hidden = true;
-  $("go").disabled = true;
-  $("go").textContent = "Making brief";
+  showAnalysis(name, $("goal").value, meeting);
 
   const qs = new URLSearchParams({ name, kind: $("kind").value, goal: $("goal").value, meeting,
                                   about: $("about").value.trim() });
   source = new EventSource(`/api/brief?${qs}`);
-  const finish = () => { source.close(); source = null; $("go").disabled = false; $("go").textContent = "Make brief"; };
 
   source.addEventListener("step", (ev) => { const d = JSON.parse(ev.data); showStep(d.stage, d); });
-  source.addEventListener("brief", (ev) => { finish(); renderBrief(JSON.parse(ev.data)); });
-  source.addEventListener("failure", (ev) => { finish(); showFailure(JSON.parse(ev.data).message); });
-  source.onerror = () => { if (source) { finish(); showFailure("Lost the connection to the Vouch server. Is it still running?"); } };
+  // A finished brief opens as its own page (/brief/<id>), with no search screen to scroll back to.
+  // A which-one question has no id: it is still part of asking, so it shows here, on its own.
+  source.addEventListener("brief", (ev) => {
+    const b = JSON.parse(ev.data);
+    stopStream();
+    if (b.id) { location.assign(`/brief/${encodeURIComponent(b.id)}`); return; }
+    $("analysis").hidden = true;
+    renderBrief(b);
+  });
+  source.addEventListener("failure", (ev) => { stopStream(); showFailure(JSON.parse(ev.data).message); });
+  source.onerror = () => { if (source) { stopStream(); showFailure("Lost the connection to the Vouch server. Is it still running?"); } };
+});
+
+function stopStream() {
+  if (source) source.close();
+  source = null;
+  clearInterval(clock);
+}
+
+// Cancel during a run, or go back after a failure: either way, return to the question.
+$("cancel").addEventListener("click", () => {
+  stopStream();
+  showQuestion();
+  $("name").focus();
+});
+
+// ---------- the brief page: /brief/<id> loads a saved brief and shows only that ----------
+function showMissing(text) {
+  const r = $("result");
+  r.replaceChildren(h("h2", { id: "result-title", class: "missing-title", text: "Brief not found" }),
+                    h("p", { class: "nothing", text }));
+  r.hidden = false;
+}
+
+async function loadSavedBrief() {
+  const id = decodeURIComponent(location.pathname.slice("/brief/".length)).replace(/\/$/, "");
+  if (!/^[0-9a-f]{12}$/.test(id)) { showMissing("That link doesn't point to a brief. Make a new one from the start page."); return; }
+  try {
+    const res = await fetch(`/api/briefs/${id}`);
+    if (res.status === 404) { showMissing("No saved brief has that link. It may have been made on another computer. Make a new one from the start page."); return; }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    renderBrief(await res.json());
+  } catch (e) {
+    showMissing("Couldn't load this brief from the Vouch server. Check that it's still running, then reload the page.");
+  }
+}
+
+if (document.documentElement.classList.contains("route-brief")) loadSavedBrief();
+
+// Back from a brief page can restore this page from the browser's memory, still showing the
+// finished analysis. Return it to the question instead.
+window.addEventListener("pageshow", (e) => {
+  if (e.persisted && !document.documentElement.classList.contains("route-brief")) {
+    stopStream();
+    showQuestion();
+  }
 });
 
 // A new name means the old "which one" hint no longer applies.

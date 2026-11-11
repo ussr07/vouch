@@ -12,12 +12,163 @@
   --sans: "Schibsted Grotesk", "Segoe UI", system-ui, sans-serif;
 }
 
+/* ---------- Entry tokens: the dark instrument that takes the question ----------
+   Everything the entry page draws reads from here. The brief below keeps the
+   paper tokens above. */
+:root {
+  /* Colour (contrast on --color-bg in brackets) */
+  --color-bg: #080808;
+  --color-surface: #111111;
+  --color-raised: #1A1A1A;
+  --color-text-primary: #EDEBE6;    /* 16:1 */
+  --color-text-secondary: #A8A8A8;  /* 8.3:1 */
+  --color-text-muted: #858585;      /* 5.4:1 */
+  --color-line: #6E6E6E;            /* 3.9:1, field underlines (non-text 3:1) */
+  --color-phosphor: #F4F1E8;        /* warm white, the one accent */
+  --color-phosphor-hot: #FFFFFF;
+  --color-phosphor-pressed: #DEDAD0;
+  --color-press-ring: rgba(244, 241, 232, 0.18);
+  --color-phosphor-dim: #8F8C84;    /* letters before they are checked */
+  --color-on-phosphor: #080808;
+  --color-glow: rgba(244, 241, 232, 0.5);
+  --color-scanline: rgba(255, 255, 255, 0.024);
+  --color-vignette: rgba(0, 0, 0, 0.75);
+  --color-error: #F2A7A0;           /* 10:1 */
+  --color-warning: #E8C47C;         /* the one non-monochrome colour: only the drawn warning triangle */
+  --color-rule: #262626;            /* the quiet line between stories */
+
+  /* Type */
+  --font-display: var(--serif);
+  --font-body: var(--sans);
+  --font-raw: "IBM Plex Mono", ui-monospace, monospace;
+  --fs-wordmark: clamp(4.75rem, 17vw, 14.5rem);
+  --fs-sentence: clamp(1.6rem, 3.4vw, 2.6rem);
+  --fs-tagline: clamp(1.05rem, 1.4vw, 1.25rem);
+  --fs-body: 1rem;
+  --fs-nav: 0.9375rem;
+  --fs-button: 1.0625rem;
+  --fs-subject: clamp(3rem, 9vw, 8rem);
+  --fs-mark: 1.5rem;
+  --fs-section: clamp(1.5rem, 2.4vw, 1.875rem);
+  --fs-headline: clamp(1.25rem, 1.9vw, 1.5rem);
+  --fs-reading: 1.125rem;
+  --fs-quote: 1.0625rem;
+  --fs-tick: 0.75rem;
+  --fs-stage-label: 1.1875rem;
+  --lh-subject: 0.95;
+  --fs-stage: 1.0625rem;
+  --fs-small: 0.875rem;
+  --ls-button: -0.005em;
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --lh-wordmark: 0.9;
+  --lh-sentence: 1.5;
+  --lh-snug: 1.3;
+  --lh-body: 1.6;
+  --ls-wordmark: -0.035em;
+  --ls-sentence: -0.01em;
+
+  /* Space */
+  --gutter: clamp(1.25rem, 4.5vw, 4rem);
+  --space-frame-top: clamp(1rem, 2.5vw, 2rem);
+  --space-frame-bottom: clamp(2.5rem, 6vw, 4.5rem);
+  --space-0: 0.25rem;
+  --space-1: 0.5rem;
+  --space-2: 0.75rem;
+  --space-3: 1.25rem;
+  --space-4: 1.75rem;
+  --space-5: 2.5rem;
+  --space-6: clamp(2.5rem, 7vh, 5rem);
+  --space-7: clamp(4rem, 10vh, 7rem);
+
+  /* Layout. Breakpoints used below: 40rem (phone) and 64rem (two columns);
+     media queries cannot read custom properties, so they are written there. */
+  --layout-max: 90rem;
+  --layout-entry-min-h: 100svh;     /* each dark screen is exactly one screen tall at least */
+  --layout-sentence-max: 30em;
+  --layout-how-w: 22rem;
+  --layout-stages-max: 64rem;
+  --layout-report-max: 66rem;       /* reading column + proof margin, no dead gap between them */
+  --layout-margin-w: 13rem;         /* the proof margin beside each story */
+  --layout-measure: 62ch;           /* reading width for summaries, quotes and lists */
+  --flag-size: 0.75rem;
+  --line-strike: 1.5px;             /* marks a removed item without hiding its words */
+  --chevron: 0.45rem;
+  --size-summary: 2.25rem;
+  --timeline-pad: 0.75rem;
+  --stage-mark-w: 0.75rem;
+  --stage-step-w: 7.5rem;
+  --stage-who-w: 13rem;
+  --line-mark: 2px;
+  --size-touch: 2.75rem;            /* 44px: the smallest target anywhere on the dark screens */
+  --size-action: 3.25rem;           /* 52px: the primary action */
+  --nav-pad-x: 0.875rem;
+  --nav-gap: 0.25rem;
+  --nav-bar-inset: 0.5rem;
+  --press-scale: 0.97;
+  --press-ring: 6px;
+  --btn-pad-x: 1.75rem;
+  --radius-control: 2px;
+  --line-nav: 2px;
+  --line-field: 2px;
+  --line-field-quiet: 1px;
+  --line-raster: 2px;
+  --focus-width: 2px;
+  --focus-offset: 3px;
+
+  /* Motion: the wordmark's proof lock */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quint: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-standard: ease;
+  --dur-instant: 80ms;
+  --dur-fast: 180ms;
+  --dur-medium: 420ms;
+  --dur-decay: 720ms;        /* phosphor persistence after a letter locks */
+  --dur-sweep: 1000ms;       /* raster line: draw, hold, fade */
+  --dur-flicker: 140ms;
+  --delay-sweep: 200ms;
+  --delay-raw: 420ms;
+  --delay-lock: 640ms;
+  --stagger-lock: 90ms;
+  --delay-flicker: 1180ms;
+  --delay-reveal: 1050ms;
+  --stagger-reveal: 80ms;
+  --opacity-raw: 0.6;
+  --flicker-depth: 0.84;     /* glitch intensity: the one settle flicker never dips below this */
+  --rise: 0.5rem;
+  --delay-analysis: 120ms;   /* the analysis screen arrives quickly: the user just acted */
+  --dur-scan: 1600ms;
+  --scan-w: 22%;
+  --scan-travel: 460%;       /* 100% / 22%, so the scan leaves the row on the right */
+  --scan-opacity: 0.7;
+  --scan-rest-opacity: 0.3;  /* the static line shown under reduced motion */
+
+  /* Effects */
+  --glow-blur: 0.06em;
+  --glow-rest: 0.16;         /* glow intensity at rest */
+  --glow-hover: 0.34;
+  --scanline-period: 3px;
+  --grain-opacity: 0.05;
+  --vignette-start: 55%;
+}
+@media (max-width: 40rem) {
+  :root {
+    --glow-blur: 0.05em;
+    --glow-rest: 0.12;
+    --grain-opacity: 0.035;
+    --scanline-period: 4px;
+    --vignette-start: 40%;
+    --stagger-lock: 70ms;
+    --fs-sentence: clamp(1.4rem, 6.4vw, 1.6rem);
+  }
+}
+
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
   margin: 0;
-  background: var(--paper);
-  color: var(--ink);
+  background: var(--color-bg);   /* every screen is the dark instrument; print switches to paper */
+  color: var(--color-text-primary);
   font: 400 1rem/1.55 var(--sans);
 }
 .sr-only {
@@ -26,169 +177,652 @@ body {
 }
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
-.page { max-width: 64rem; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
-
-.masthead { display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
-.wordmark { margin: 0; font-weight: 700; font-size: 1.5rem; letter-spacing: -0.02em; }
-.tagline { margin: 0; color: var(--ink-soft); }
-
-/* The question as a sentence: the first thing anyone sees. */
-.ask { margin: 3.5rem 0 2rem; }
-.sentence {
-  margin: 0;
-  font: 400 clamp(1.6rem, 3.6vw, 2.6rem)/1.5 var(--serif);
-  max-width: 30em;
-}
-.field input, .field select {
-  font: inherit; color: var(--ink);
-  background: transparent;
-  border: 0; border-bottom: 2px solid var(--ink);
-  padding: 0 0.15em; border-radius: 0;
-  -webkit-appearance: none; appearance: none;
-}
-.field select {
-  cursor: pointer; padding-right: 0.9em;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2314213D' stroke-width='1.5'/%3E%3C/svg%3E") no-repeat right 0.1em center / 0.4em auto;
-}
-.field-name input { width: 7.5em; }
-.field input[type="datetime-local"] { width: 11.8em; }
-.field input::placeholder { color: #9AA5B4; }
-.field input:focus, .field select:focus { outline: none; border-bottom-color: var(--focus); background: var(--pencil); }
-
-.which { margin: 1.25rem 0 0; display: flex; gap: 0.75rem; align-items: baseline; flex-wrap: wrap; color: var(--ink-soft); }
-.which input {
-  font: inherit; color: var(--ink); background: transparent; width: min(20rem, 100%);
-  border: 0; border-bottom: 1px solid var(--rule); padding: 0.2rem 0.1rem; border-radius: 0;
-}
-.which input:focus { outline: none; border-bottom-color: var(--focus); background: var(--pencil); }
-
-.choose h3 { margin: 0; font: 500 1.6rem/1.3 var(--serif); }
-.choose p { margin: 0.5rem 0 1.25rem; color: var(--ink-soft); max-width: 40em; }
-.choose ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; max-width: 36rem; }
-.choose button {
-  width: 100%; text-align: left; display: flex; justify-content: space-between; gap: 1rem;
-  background: var(--sheet); color: var(--ink); border: 1px solid var(--ink); border-radius: 6px;
-  font: 400 1.05rem var(--serif); padding: 0.8rem 1rem;
-}
-.choose button:hover { background: var(--pencil); }
-.choose button span { font: 400 0.88rem var(--sans); color: var(--ink-soft); white-space: nowrap; }
-.identified { color: var(--verified); }
-.brief-head .warning { color: var(--struck); border-left: 3px solid var(--struck); border-radius: 0; padding-left: 0.6rem; }
-
-.ask-actions { display: flex; align-items: center; gap: 1.25rem; margin-top: 1.75rem; flex-wrap: wrap; }
 button {
   font: 500 1rem var(--sans); color: #fff; background: var(--ink);
   border: 0; border-radius: 6px; padding: 0.75rem 1.4rem; cursor: pointer;
 }
 button:hover { background: #22325A; }
 button:disabled { background: #7C879A; cursor: progress; }
-.form-error { margin: 0; color: var(--struck); }
 
-.empty { max-width: 36rem; color: var(--ink-soft); }
-.empty p { margin: 0; }
+/* ======================= The brief page =======================
+   Same ground, type and tokens as the entry. Every colour below reads from the
+   report tokens (--r-*): on screen they point at the dark entry tokens; in print
+   they point back at the paper tokens, so the printed brief stays a light page. */
+.page {
+  --r-bg: var(--color-bg);
+  --r-surface: var(--color-surface);
+  --r-raised: var(--color-raised);
+  --r-text: var(--color-text-primary);
+  --r-text-2: var(--color-text-secondary);
+  --r-text-3: var(--color-text-muted);
+  --r-line: var(--color-line);
+  --r-rule: var(--color-rule);
+  --r-accent: var(--color-phosphor);
+  --r-on-accent: var(--color-on-phosphor);
+  --r-warning: var(--color-warning);
+  --r-strike: var(--color-error);
 
-/* Live pipeline stages */
-.progress { list-style: none; margin: 0 0 2rem; padding: 0; display: grid; gap: 0.35rem; color: var(--ink-soft); }
-.progress li { display: flex; gap: 0.6rem; align-items: baseline; }
-.progress .mark { width: 1.1rem; flex: none; text-align: center; }
-.progress li.done .mark { color: var(--verified); }
-.progress li.running .mark::before { content: ""; display: inline-block; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--ink-soft); animation: pulse 1s ease-in-out infinite; }
-.progress li.failed { color: var(--struck); }
-@keyframes pulse { 50% { opacity: 0.25; } }
+  max-width: var(--layout-max); margin: 0 auto;
+  padding: var(--space-frame-top) var(--gutter) var(--space-7);
+  color: var(--r-text);
+  font: var(--fw-regular) var(--fs-body)/var(--lh-body) var(--font-body);
+}
+.page ::selection { background: var(--r-accent); color: var(--r-on-accent); }
+.page :focus-visible { outline: var(--focus-width) solid var(--r-accent); outline-offset: var(--focus-offset); }
+.page a { color: inherit; text-underline-offset: 0.2em; text-decoration-color: var(--r-line); }
+.page a:hover { text-decoration-color: var(--r-text); }
 
-/* The brief: a sheet with a margin for proof marks */
-.result { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; padding: 2.25rem clamp(1.25rem, 4vw, 3rem) 2.5rem; }
-.brief-head h2 { margin: 0; font: 500 1.9rem/1.2 var(--serif); }
-.brief-head p { margin: 0.4rem 0 0; color: var(--ink-soft); }
-.funnel { margin: 1.25rem 0 0; color: var(--ink-soft); font-size: 0.95rem; }
-.funnel strong { color: var(--ink); font-weight: 500; }
+/* The paper only exists once there is something on it: no empty band under the entry. */
+.page:has(> #result[hidden]) { display: none; }
 
-.part { margin-top: 2.75rem; }
-.part > h3 { margin: 0 0 1rem; font: 500 1.05rem var(--sans); }
+/* The brief page (/brief/<id>) is its own page: the search screen is never on it. */
+.route-brief .entry, .route-brief .analysis { display: none; }
 
+/* ---- Page bar: the wordmark top left, the two actions top right ---- */
+.page-bar {
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-2);
+  min-height: var(--size-touch); margin: 0 0 var(--space-6);
+}
+.page-bar-mark { font: var(--fw-medium) var(--fs-mark)/1 var(--font-display); letter-spacing: var(--ls-wordmark); }
+.page-bar-actions { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.page-bar .btn-quiet { min-height: var(--size-touch); padding: 0 var(--space-3); font-size: var(--fs-nav); text-decoration: none; }
+
+.result { max-width: var(--layout-report-max); }
+
+/* ---- Report head ---- */
+.brief-head h2 {
+  margin: 0; overflow-wrap: anywhere;
+  font: var(--fw-medium) var(--fs-subject)/var(--lh-subject) var(--font-display);
+  letter-spacing: var(--ls-wordmark);
+}
+.brief-head p { margin: var(--space-1) 0 0; color: var(--r-text-2); max-width: var(--layout-measure); }
+.brief-head .identified { margin-top: var(--space-3); color: var(--r-text); font-size: var(--fs-tagline); }
+.brief-head .funnel { margin-top: var(--space-1); color: var(--r-text-2); }   /* the counts: the numbers panel only visualises them */
+.funnel strong { color: var(--r-text); font-weight: var(--fw-medium); }
+.brief-head .key { margin-top: var(--space-3); font-size: var(--fs-small); line-height: var(--lh-body); }
+
+/* ---- Flags: a drawn mark plus words, never colour alone ---- */
+.flag { display: inline-flex; align-items: baseline; gap: var(--space-1); }
+.flag::before {
+  content: ""; flex: none; align-self: center;
+  width: var(--flag-size); height: var(--flag-size); box-sizing: border-box;
+}
+.flag.outlets::before { border-radius: 50%; background: var(--r-accent); }                      /* filled: several outlets */
+.flag.single { color: var(--r-text); font-weight: var(--fw-medium); }
+.flag.single::before { border-radius: 50%; border: var(--line-mark) solid var(--r-accent); }       /* hollow: one outlet */
+.flag.check { color: var(--r-text); }
+.flag.check::before {                                                                          /* a drawn tick */
+  width: calc(var(--flag-size) * 0.45); height: calc(var(--flag-size) * 0.85);
+  margin: 0 calc(var(--flag-size) * 0.28) 0 calc(var(--flag-size) * 0.27);
+  border-right: var(--line-mark) solid var(--r-accent); border-bottom: var(--line-mark) solid var(--r-accent);
+  transform: translateY(-15%) rotate(45deg);
+}
+.flag.older, .brief-head .warning { color: var(--r-text); }   /* the words stay neutral; only the triangle is amber */
+.flag.older::before, .brief-head .warning::before {                                            /* a drawn warning triangle */
+  background: var(--r-warning); clip-path: polygon(50% 0, 100% 100%, 0 100%);
+}
+.brief-head .warning { display: flex; gap: var(--space-1); align-items: baseline; }
+.brief-head .warning::before { content: ""; flex: none; align-self: center; width: var(--flag-size); height: var(--flag-size); }
+
+/* ---- This brief in numbers ---- */
+.stats {
+  margin-top: var(--space-5);
+  display: grid; gap: var(--space-2);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 2fr);
+}
+.stat { padding: var(--space-3); background: var(--r-surface); border-radius: var(--radius-control); min-width: 0; }
+.stat-title { margin: 0; font: var(--fw-medium) var(--fs-small)/var(--lh-snug) var(--font-body); color: var(--r-text-2); }
+.stat-sub { margin: var(--space-3) 0 0; font: var(--fw-regular) var(--fs-small)/var(--lh-snug) var(--font-body); color: var(--r-text-2); }
+.stat-empty { margin: var(--space-2) 0 0; color: var(--r-text); }
+.stat-note { margin: var(--space-2) 0 0; font-size: var(--fs-small); }
+.split { display: block; overflow: visible; margin-top: var(--space-2); }
+.seg { stroke: var(--r-surface); stroke-width: 2; }                 /* the 2px gap between parts */
+.seg-a { fill: var(--r-accent); }
+.seg-b { fill: var(--r-line); }
+.legend {
+  list-style: none; margin: var(--space-2) 0 0; padding: 0;
+  display: flex; flex-wrap: wrap; gap: var(--space-0) var(--space-3);
+  font-size: var(--fs-small); color: var(--r-text-2);
+}
+.legend strong { color: var(--r-text); font-weight: var(--fw-medium); margin-right: 0.25em; }
+.legend-item { display: inline-flex; align-items: center; gap: var(--space-1); }
+.swatch { flex: none; width: var(--flag-size); height: var(--flag-size); border-radius: 2px; box-sizing: border-box; }
+.legend-a .swatch { background: var(--r-accent); }
+.legend-b .swatch { background: var(--r-line); }
+.swatch.dot { border-radius: 50%; background: var(--r-accent); }
+.swatch.ring { border-radius: 50%; background: transparent; border: var(--line-mark) solid var(--r-accent); }
+
+.stat-wide .legend { margin-top: var(--space-1); }
+.timeline-wrap { margin-top: var(--space-2); padding: 0 var(--timeline-pad); }   /* room for marks at the window's ends */
+.timeline { display: block; overflow: visible; }
+.timeline .axis, .timeline .stem { stroke: var(--r-line); stroke-width: 1; }
+.timeline .tick { fill: var(--r-text-2); font: var(--fw-regular) var(--fs-tick) var(--font-body); }
+.pt circle { fill: var(--r-accent); stroke: var(--r-surface); stroke-width: 2; }
+.pt text { fill: var(--r-on-accent); font: var(--fw-medium) var(--fs-tick) var(--font-body); pointer-events: none; }
+.pt-single circle { fill: var(--r-surface); stroke: var(--r-accent); }
+.pt-single text { fill: var(--r-accent); }
+.pt:hover circle, .pt:focus-visible circle { stroke: var(--color-phosphor-hot); stroke-width: 3; }
+.pt:focus-visible { outline: none; }
+
+/* ---- Sections ---- */
+.part { margin-top: var(--space-6); }
+.part > h3 {
+  margin: 0 0 var(--space-3);
+  font: var(--fw-medium) var(--fs-section)/var(--lh-snug) var(--font-display); letter-spacing: var(--ls-sentence);
+}
+
+/* ---- Stories: the text on the left, the proof margin on the right ---- */
 .row {
-  display: grid; grid-template-columns: minmax(0, 1fr) 11rem; gap: 2rem;
-  padding: 1.25rem 0; border-top: 1px solid var(--rule);
+  display: grid; grid-template-columns: minmax(0, 1fr) var(--layout-margin-w); gap: var(--space-5);
+  padding: var(--space-4) 0; border-top: 1px solid var(--r-rule);
 }
 .row:first-of-type { border-top: 0; padding-top: 0; }
-.story h4 { margin: 0; font: 500 1.3rem/1.3 var(--serif); }
-.story h4 .num { color: var(--ink-soft); margin-right: 0.4em; }
-.story .summary { margin: 0.4rem 0 0; font: 400 1.08rem/1.65 var(--serif); max-width: 40em; }
-.quote {
-  margin: 0.9rem 0 0; padding: 0.15rem 0 0.15rem 0.9rem;
-  border-left: 3px solid var(--verified);
-  font: italic 400 1.02rem/1.6 var(--serif);
+.story h4 {
+  margin: 0; max-width: var(--layout-measure); text-wrap: balance;
+  font: var(--fw-medium) var(--fs-headline)/var(--lh-snug) var(--font-display);
 }
-.quote mark { background: var(--pencil); color: inherit; padding: 0.05em 0.1em; }
-.quote cite { display: block; margin-top: 0.3rem; font: 400 0.88rem var(--sans); font-style: normal; color: var(--ink-soft); }
-.quote cite a, .sources a { color: inherit; }
-.sources { margin-top: 0.6rem; font-size: 0.9rem; color: var(--ink-soft); }
-.sources summary { cursor: pointer; width: fit-content; }
-.sources ul { margin: 0.5rem 0 0; padding-left: 1.1rem; }
-.sources li { margin: 0.15rem 0; }
+.story h4 .num { color: var(--r-text-3); margin-right: 0.4em; font-variant-numeric: tabular-nums; }
+.story .summary {
+  margin: var(--space-1) 0 0; max-width: var(--layout-measure);
+  font: var(--fw-regular) var(--fs-reading)/var(--lh-body) var(--font-display);
+}
+/* The quote: set apart on a raised surface, the words exactly as found. */
+.quote {
+  margin: var(--space-3) 0 0; padding: var(--space-2) var(--space-3); max-width: var(--layout-measure);
+  background: var(--r-surface); border-radius: var(--radius-control);
+  font: italic var(--fw-regular) var(--fs-quote)/var(--lh-body) var(--font-display);
+}
+.quote mark { background: none; color: var(--r-text); }
+.quote cite { display: block; margin-top: var(--space-1); font: normal var(--fw-regular) var(--fs-small) var(--font-body); color: var(--r-text-2); }
+.quote cite a { color: var(--r-text); }
 
-.margin { font-size: 0.88rem; color: var(--ink-soft); display: grid; gap: 0.2rem; align-content: start; }
-.margin .older { color: var(--struck); }
-.margin .single { color: var(--ink); font-weight: 500; }
-.brief-head .key { margin-top: 0.9rem; max-width: 46em; font-size: 0.92rem; line-height: 1.55; }
-.margin .check { color: var(--verified); font-weight: 500; }
+/* "N articles behind this": a disclosure with a drawn chevron. */
+.sources { margin-top: var(--space-1); font-size: var(--fs-small); color: var(--r-text-2); }
+.sources summary {
+  display: inline-flex; align-items: center; gap: var(--space-1); min-height: var(--size-summary);
+  cursor: pointer; list-style: none;
+}
+.sources summary::-webkit-details-marker { display: none; }
+.sources summary::before {
+  content: ""; width: var(--chevron); height: var(--chevron);
+  border-right: var(--line-mark) solid currentColor; border-bottom: var(--line-mark) solid currentColor;
+  transform: rotate(-45deg); transition: transform var(--dur-fast) var(--ease-out-quint);
+}
+.sources[open] summary::before { transform: rotate(45deg); }
+.sources summary:hover { color: var(--r-text); }
+.sources ul { margin: 0 0 var(--space-1); padding-left: var(--space-4); }
+.sources li { margin: var(--space-0) 0; }
+.sources li a { color: var(--r-text); }
 
-.points { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.6rem; font: 400 1.05rem/1.6 var(--serif); max-width: 42em; }
-.points .ref { font: 400 0.85rem var(--sans); color: var(--ink-soft); margin-left: 0.35em; white-space: nowrap; }
-.points .ref a { color: inherit; }
-.two-up { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; }
-.two-up .part { margin-top: 2.75rem; }
+.margin { display: grid; gap: var(--space-1); align-content: start; font-size: var(--fs-small); color: var(--r-text-2); }
 
-/* The ledger: what was thrown out, struck through like an editor's markup */
-.ledger-intro { margin: -0.4rem 0 1rem; color: var(--ink-soft); max-width: 40em; }
-.ledger .row { padding: 0.7rem 0; }
+/* ---- Worth raising / Questions to ask ---- */
+.two-up { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-5); }
+.points {
+  margin: 0; padding-left: var(--space-4); display: grid; gap: var(--space-2); max-width: var(--layout-measure);
+  font: var(--fw-regular) var(--fs-reading)/var(--lh-body) var(--font-display);
+}
+.points li::marker { color: var(--r-text-3); font: var(--fw-medium) var(--fs-small) var(--font-body); }
+.points .ref { margin-left: 0.35em; white-space: nowrap; font: var(--fw-regular) var(--fs-small) var(--font-body); color: var(--r-text-2); }
+
+/* ---- The ledger: what was thrown out, struck through like an editor's markup ---- */
+.ledger-intro { margin: calc(-1 * var(--space-1)) 0 var(--space-3); color: var(--r-text-2); max-width: var(--layout-measure); }
+.ledger h4 { margin: var(--space-4) 0 var(--space-1); font: var(--fw-medium) var(--fs-small)/var(--lh-snug) var(--font-body); color: var(--r-text-2); }
+.ledger .row { padding: var(--space-2) 0; }
 .ledger .struck {
-  margin: 0; font: 400 1rem/1.5 var(--serif); color: var(--ink-soft);
-  text-decoration: line-through; text-decoration-color: var(--struck); text-decoration-thickness: 2px;
-  overflow-wrap: anywhere;
+  margin: 0; overflow-wrap: anywhere; color: var(--r-text-2);
+  font: var(--fw-regular) var(--fs-body)/var(--lh-body) var(--font-display);
+  text-decoration: line-through; text-decoration-color: var(--r-strike); text-decoration-thickness: var(--line-strike);
 }
 .ledger .struck a { color: inherit; text-decoration: inherit; }
-.ledger .times { display: inline-block; text-decoration: none; margin-left: 0.3em; font: 500 0.85rem var(--sans); }
-.ledger .reason { font-size: 0.88rem; color: var(--struck); align-self: start; }
-.ledger h4 { margin: 1.5rem 0 0.25rem; font: 500 0.95rem var(--sans); color: var(--ink-soft); }
+.ledger .times { display: inline-block; margin-left: 0.3em; text-decoration: none; font: var(--fw-medium) var(--fs-small) var(--font-body); color: var(--r-text-2); }
+.ledger .reason { align-self: start; font-size: var(--fs-small); color: var(--r-text-2); }
 
-.machine { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--rule); font-size: 0.85rem; color: var(--ink-soft); }
-.nothing { font: 400 1.05rem/1.6 var(--serif); }
-
-@media (max-width: 720px) {
-  .page { padding-top: 1.5rem; }
-  .ask { margin-top: 2.25rem; }
-  .row { grid-template-columns: 1fr; gap: 0.5rem; }
-  .margin { display: flex; flex-wrap: wrap; gap: 0.2rem 1rem; }
-  .two-up { grid-template-columns: 1fr; gap: 0; }
+/* How the brief was made (model via Bifrost, search by Tavily): the quiet last line. */
+.machine {
+  margin: var(--space-6) 0 0; padding-top: var(--space-3); max-width: var(--layout-measure);
+  border-top: 1px solid var(--r-rule); font-size: var(--fs-small); color: var(--r-text-2);
 }
+.nothing { font: var(--fw-regular) var(--fs-reading)/var(--lh-body) var(--font-display); max-width: var(--layout-measure); }
+.missing-title { margin: 0 0 var(--space-1); font: var(--fw-medium) var(--fs-section)/var(--lh-snug) var(--font-display); }
+
+/* ---- "Which one do you mean?" ---- */
+.choose h3 { margin: 0; font: var(--fw-medium) var(--fs-section)/var(--lh-snug) var(--font-display); }
+.choose p { margin: var(--space-1) 0 var(--space-3); color: var(--r-text-2); max-width: var(--layout-measure); }
+.choose ul { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--space-1); max-width: 36rem; }
+.choose button {
+  width: 100%; min-height: var(--size-touch); padding: var(--space-2) var(--space-3);
+  display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); text-align: left;
+  background: var(--r-surface); color: var(--r-text); border: 1px solid var(--r-line); border-radius: var(--radius-control);
+  font: var(--fw-regular) var(--fs-reading) var(--font-display);
+}
+.choose button:hover { background: var(--r-raised); border-color: var(--r-text-2); }
+.choose button span { font: var(--fw-regular) var(--fs-small) var(--font-body); color: var(--r-text-2); white-space: nowrap; }
+
+/* ---- One motion moment: the numbers draw in once ---- */
+@media (prefers-reduced-motion: no-preference) {
+  .split { transform-origin: left; animation: split-in var(--dur-decay) var(--ease-out-expo) var(--delay-analysis) both; }
+  .pt { animation: entry-rise var(--dur-medium) var(--ease-out-quint)
+        calc(var(--delay-analysis) + var(--i) * var(--stagger-reveal)) both; }
+}
+@keyframes split-in { from { transform: scaleX(0); } to { transform: none; } }
 @media (prefers-reduced-motion: reduce) {
-  .progress li.running .mark::before { animation: none; }
+  .page *, .page *::before, .page *::after { transition: none !important; }
 }
 
-.print-btn { margin-top: 1rem; background: transparent; color: var(--ink); border: 1px solid var(--ink); padding: 0.45rem 0.9rem; font-size: 0.9rem; }
-.print-btn:hover { background: var(--pencil); }
+@media (max-width: 64rem) {
+  .stats { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .stat-wide { grid-column: 1 / -1; }
+}
+@media (max-width: 45rem) {
+  .stats { grid-template-columns: minmax(0, 1fr); }
+  .row { grid-template-columns: minmax(0, 1fr); gap: var(--space-2); }
+  .margin { display: flex; flex-wrap: wrap; gap: var(--space-0) var(--space-3); }
+  .flag.reported::before { display: none; }   /* the blank slot only aligns a column; a wrapped row has none */
+  .two-up { grid-template-columns: minmax(0, 1fr); gap: 0; }
+}
 
-/* Printing gives the one-page brief: no form, no progress, no ledger, no buttons. */
+/* Printing gives the one-page brief on white paper: no screens, numbers, ledger or buttons. */
 @media print {
   @page { margin: 11mm 12mm; }
   html { font-size: 8.5pt; }   /* scales every rem-based size on the page */
-  body { background: #fff; }
-  .page { padding: 0; max-width: none; }
-  .masthead, .ask, .progress, .empty, .ledger, .print-btn, .sources, .machine, .key { display: none !important; }
-  .result { border: 0; padding: 0; }
-  .brief-head h2 { font-size: 16pt; }
+  body { background: var(--sheet); }
+  .page {
+    --r-bg: var(--sheet); --r-surface: transparent; --r-raised: transparent;
+    --r-text: var(--ink); --r-text-2: var(--ink-soft); --r-text-3: var(--ink-soft);
+    --r-line: var(--rule); --r-rule: var(--rule);
+    --r-accent: var(--verified); --r-on-accent: var(--sheet);
+    --r-warning: var(--struck); --r-strike: var(--struck);
+    padding: 0; max-width: none;
+  }
+  .entry, .analysis, .page-bar, .stats, .ledger, .print-btn, .sources, .key { display: none !important; }
+  .result { max-width: none; }
+  .brief-head h2 { font-size: 16pt; letter-spacing: normal; }
+  .brief-head .identified { margin-top: 2pt; font-size: inherit; }
+  .brief-head p { margin-top: 2pt; }
   .part { margin-top: 10pt; }
-  .part > h3 { margin-bottom: 4pt; }
+  .part > h3 { margin-bottom: 4pt; font-size: 11pt; }
   .row { grid-template-columns: minmax(0, 1fr) 30mm; gap: 6mm; padding: 5pt 0; break-inside: avoid; }
   .story h4 { font-size: 11pt; }
   .story .summary, .points { font-size: 9.5pt; line-height: 1.4; }
-  .quote { margin-top: 3pt; font-size: 8.5pt; line-height: 1.35; }
+  .quote { margin-top: 3pt; padding: 0; font-size: 8.5pt; line-height: 1.35; }
   .quote cite { margin-top: 1pt; font-size: 7.5pt; }
-  .brief-head p { margin-top: 2pt; }
-  .quote mark { background: none; }
-  .margin { font-size: 8pt; }
+  .margin { font-size: 8pt; gap: 1pt; }
   .two-up { gap: 8mm; }
   .points { gap: 2pt; }
+  .machine { margin-top: 8pt; padding-top: 3pt; font-size: 7pt; max-width: none; }
   a { color: inherit; text-decoration: none; }
+}
+
+/* ======================= Entry page =======================
+   Scoped to .entry so none of it can restyle the progress list, the brief,
+   the ledger or the print layout. Values come from the entry tokens. */
+/* The two dark screens (the question and the analysis) share one ground and one CRT layer. */
+.entry, .analysis {
+  position: relative; isolation: isolate;
+  color-scheme: dark;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font: var(--fw-regular) var(--fs-body)/var(--lh-body) var(--font-body);
+}
+.entry[hidden], .analysis[hidden] { display: none; }
+/* CRT layer. It sits behind the content, so text stays crisp and it can never take a click.
+   ::before is scanlines under a vignette, ::after is static grain. Nothing here animates. */
+.entry::before, .entry::after, .analysis::before, .analysis::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+}
+.entry::before, .analysis::before {
+  background:
+    radial-gradient(ellipse 120% 100% at 50% 40%, transparent var(--vignette-start), var(--color-vignette) 100%),
+    repeating-linear-gradient(to bottom, transparent 0 calc(var(--scanline-period) - 1px),
+      var(--color-scanline) calc(var(--scanline-period) - 1px) var(--scanline-period));
+}
+.entry::after, .analysis::after {
+  opacity: var(--grain-opacity);
+  /* A stored noise tile: fixed pixels, no repaint. Its colours live inside the SVG. */
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.2 -.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.entry ::selection, .analysis ::selection { background: var(--color-phosphor); color: var(--color-on-phosphor); }
+.entry :focus-visible, .analysis :focus-visible { outline: var(--focus-width) solid var(--color-phosphor); outline-offset: var(--focus-offset); }
+
+.entry-frame {
+  max-width: var(--layout-max); margin: 0 auto;
+  /* The entry is the whole first screen; the brief prints on paper below it. */
+  min-height: var(--layout-entry-min-h);
+  padding: var(--space-frame-top) var(--gutter) var(--space-frame-bottom);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto 1fr auto auto;
+  grid-template-areas: "nav" "mast" "ask" "how";
+}
+.nav      { grid-area: nav; }
+.masthead { grid-area: mast; align-self: end; padding-top: var(--space-6); }
+.ask      { grid-area: ask; margin-top: var(--space-5); }
+.how      { grid-area: how; margin-top: var(--space-6); scroll-margin-top: var(--space-5); }
+
+/* ---- Navigation: two tabs on the left ----
+   Each link is a full 44px target. Where you are is a filled tab with a lit edge;
+   hover lifts a tab one tone step; press sinks it. The outer margin pulls the row
+   left by the tab padding so the first label sits on the wordmark's left edge. */
+.nav ul {
+  list-style: none; margin: 0 0 0 calc(-1 * var(--nav-pad-x)); padding: 0;
+  display: flex; flex-wrap: wrap; gap: var(--nav-gap);
+}
+.nav a {
+  position: relative; display: inline-flex; align-items: center;
+  min-height: var(--size-touch); padding: 0 var(--nav-pad-x);
+  border-radius: var(--radius-control);
+  font: var(--fw-medium) var(--fs-nav)/var(--lh-snug) var(--font-body);
+  color: var(--color-text-secondary); text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-standard),
+              background-color var(--dur-fast) var(--ease-standard),
+              transform var(--dur-instant) var(--ease-out-quint);
+}
+/* The lit edge: a short phosphor bar under the label of the current tab. */
+.nav a::after {
+  content: ""; position: absolute; left: var(--nav-pad-x); right: var(--nav-pad-x); bottom: var(--nav-bar-inset);
+  height: var(--line-nav); background: var(--color-phosphor);
+  transform: scaleX(0); transform-origin: left;
+  transition: transform var(--dur-fast) var(--ease-out-quint);
+}
+.nav a:hover { color: var(--color-text-primary); background-color: var(--color-surface); }
+.nav a:active { transform: scale(var(--press-scale)); background-color: var(--color-raised); }
+.nav a[aria-current="page"] { color: var(--color-text-primary); background-color: var(--color-raised); }
+.nav a[aria-current="page"]::after { transform: scaleX(1); }
+
+/* ---- The wordmark ----
+   Each letter is three layers: .wm-true (Spectral, in flow, the readable state),
+   .wm-raw (mono, the unchecked state) and ::after (a blurred copy, the phosphor glow).
+   Without animation only .wm-true and a faint glow show. */
+.wordmark {
+  margin: 0;
+  font: var(--fw-medium) var(--fs-wordmark)/var(--lh-wordmark) var(--font-display);
+  letter-spacing: var(--ls-wordmark);
+  color: var(--color-text-primary);
+}
+.wm { position: relative; display: inline-block; white-space: nowrap; }
+.wm-l { position: relative; display: inline-block; }
+.wm-true { display: inline-block; }
+.wm-raw {
+  position: absolute; inset: 0; text-align: center;
+  font-family: var(--font-raw); font-weight: var(--fw-regular); letter-spacing: 0;
+  color: var(--color-phosphor-dim); opacity: 0;
+}
+.wm-l::after {
+  content: attr(data-c); position: absolute; left: 0; top: 0; pointer-events: none;
+  color: var(--color-phosphor); filter: blur(var(--glow-blur));
+  opacity: var(--glow-rest);
+  transition: opacity var(--dur-medium) var(--ease-standard);
+}
+.masthead:hover .wm-l::after { opacity: var(--glow-hover); }
+/* The raster line that switches the signal on. */
+.wm::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 58%; height: var(--line-raster);
+  background: var(--color-phosphor); box-shadow: 0 0 var(--space-2) var(--color-glow);
+  transform-origin: left; opacity: 0; pointer-events: none;
+}
+
+.tagline {
+  margin: var(--space-3) 0 0; max-width: 36ch;
+  font: var(--fw-regular) var(--fs-tagline)/var(--lh-snug) var(--font-body);
+  color: var(--color-text-secondary);
+}
+
+/* ---- The question, as a sentence ---- */
+.sentence {
+  margin: 0; max-width: var(--layout-sentence-max);
+  font: var(--fw-regular) var(--fs-sentence)/var(--lh-sentence) var(--font-display);
+  letter-spacing: var(--ls-sentence);
+}
+.field input, .field select, .which input {
+  font: inherit; letter-spacing: inherit; color: var(--color-text-primary);
+  background-color: transparent;
+  border: 0; border-bottom: var(--line-field) solid var(--color-line); border-radius: 0;
+  padding: 0 0.15em;
+  -webkit-appearance: none; appearance: none;
+  transition: border-color var(--dur-fast) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard);
+}
+.field select {
+  cursor: pointer; padding-right: 0.9em;
+  /* The chevron's stroke is --color-text-secondary; a data URI cannot read tokens. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23A8A8A8' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 0.1em center; background-size: 0.4em auto;
+}
+.sentence .keep { white-space: nowrap; }   /* the full stop never wraps away from the date */
+.field select option { background: var(--color-surface); color: var(--color-text-primary); }
+.field-name input { width: 7.5em; }
+.field input[type="datetime-local"] { width: 11.8em; max-width: calc(100% - 0.5em); }  /* room for the full stop */
+/* Where supported, each blank is as wide as its answer, so the sentence reads as one line of prose. */
+@supports (field-sizing: content) {
+  .field-name input, .field select, .field input[type="datetime-local"] { field-sizing: content; width: auto; min-width: 3ch; }
+}
+.field input::-webkit-calendar-picker-indicator { width: 0.55em; height: 0.55em; opacity: 0.6; cursor: pointer; }
+.field input::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+.field input::placeholder, .which input::placeholder { color: var(--color-text-muted); opacity: 1; }
+.field input:hover, .field select:hover, .which input:hover { border-bottom-color: var(--color-text-secondary); }
+.field input:focus, .field select:focus, .which input:focus {
+  outline: none; border-bottom-color: var(--color-phosphor); background-color: var(--color-raised);
+}
+
+.which { margin: var(--space-3) 0 0; display: flex; gap: var(--space-2); align-items: baseline; flex-wrap: wrap; color: var(--color-text-secondary); }
+.which input { width: min(20rem, 100%); border-bottom-width: var(--line-field-quiet); padding: 0.2rem 0.1rem; }
+
+.ask-actions { display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-4); flex-wrap: wrap; }
+/* ---- Buttons on the dark screens ----
+   .btn-primary: the one prominent action per screen (Make brief).
+   .btn-quiet: everything else (Cancel, Back to the question).
+   Same height, radius and type, so style, not size, carries the hierarchy. */
+.ask-actions button, .btn-quiet {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  min-height: var(--size-action); padding: 0 var(--btn-pad-x);
+  border: var(--line-field-quiet) solid transparent; border-radius: var(--radius-control);
+  font: var(--fw-medium) var(--fs-button)/1 var(--font-body); letter-spacing: var(--ls-button);
+  cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-standard),
+              border-color var(--dur-fast) var(--ease-standard),
+              transform var(--dur-instant) var(--ease-out-quint),
+              box-shadow var(--dur-decay) var(--ease-out-quint);
+}
+.ask-actions button { color: var(--color-on-phosphor); background: var(--color-phosphor); }
+.ask-actions button:hover { background: var(--color-phosphor-hot); }
+/* Press: the button sinks a step and lights a ring; on release the ring fades like phosphor. */
+.ask-actions button:active {
+  transform: scale(var(--press-scale)); background: var(--color-phosphor-pressed);
+  box-shadow: 0 0 0 var(--press-ring) var(--color-press-ring);
+  transition-duration: var(--dur-instant);
+}
+.ask-actions button:disabled { background: var(--color-raised); color: var(--color-text-secondary); cursor: progress; transform: none; box-shadow: none; }
+
+.btn-quiet { color: var(--color-text-primary); background: transparent; border-color: var(--color-line); }
+.btn-quiet:hover { background: var(--color-surface); border-color: var(--color-text-secondary); }
+.btn-quiet:active { transform: scale(var(--press-scale)); background: var(--color-raised); transition-duration: var(--dur-instant); }
+.form-error { margin: 0; color: var(--color-error); }
+.form-error:empty { display: none; }
+
+/* ---- How it works ---- */
+.how h2 {
+  position: relative; display: inline-block; margin: 0 0 var(--space-1);
+  font: var(--fw-medium) var(--fs-body)/var(--lh-snug) var(--font-body);
+}
+/* Arriving from the nav link draws the same bar the nav uses. */
+.how h2::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: calc(-1 * var(--line-nav)); height: var(--line-nav);
+  background: var(--color-phosphor); transform: scaleX(0); transform-origin: left;
+  transition: transform var(--dur-medium) var(--ease-out-quint);
+}
+.how:target h2::after { transform: scaleX(1); }
+.how p { margin: 0; max-width: 38em; color: var(--color-text-secondary); }
+
+@media (min-width: 64rem) {
+  .entry-frame {
+    grid-template-columns: minmax(0, 1fr) var(--layout-how-w);
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas: "nav nav" "mast mast" "ask how";
+    column-gap: var(--space-6);
+  }
+  .how { margin-top: 0; align-self: end; }
+}
+
+/* ======================= Analysis screen =======================
+   Its own screen while the pipeline runs. The subject's name is the one large thing;
+   under it, the five real stages with the server's own words and counts. */
+.analysis-frame {
+  max-width: var(--layout-max); margin: 0 auto;
+  min-height: var(--layout-entry-min-h);
+  padding: var(--space-frame-top) var(--gutter) var(--space-frame-bottom);
+  display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr auto auto;
+}
+.analysis-top { display: flex; justify-content: space-between; align-items: center; min-height: var(--size-touch); }
+.analysis-mark {
+  font: var(--fw-medium) var(--fs-mark)/1 var(--font-display); letter-spacing: var(--ls-wordmark);
+  color: var(--color-text-primary);
+}
+.elapsed {
+  margin: 0; font: var(--fw-medium) var(--fs-small)/1 var(--font-body);
+  color: var(--color-text-secondary); font-variant-numeric: tabular-nums;
+}
+
+.analysis-head { align-self: end; padding-top: var(--space-6); }
+.subject {
+  position: relative; margin: 0; max-width: 100%;
+  font: var(--fw-medium) var(--fs-subject)/var(--lh-subject) var(--font-display);
+  letter-spacing: var(--ls-wordmark); overflow-wrap: anywhere;
+}
+.subject:focus { outline: none; }   /* focused by script only, so screen readers land on it */
+/* The same phosphor glow as the wordmark: a blurred copy of the name behind the crisp one. */
+.subject::after {
+  content: attr(data-name); position: absolute; inset: 0; pointer-events: none;
+  color: var(--color-phosphor); filter: blur(var(--glow-blur)); opacity: var(--glow-rest);
+}
+.analysis-context {
+  margin: var(--space-3) 0 0; max-width: 52ch;
+  font: var(--fw-regular) var(--fs-tagline)/var(--lh-body) var(--font-body);
+  color: var(--color-text-secondary);
+}
+
+.stages { margin-top: var(--space-5); max-width: var(--layout-stages-max); }
+/* Determinate progress: fills one fifth per finished stage. */
+.meter { position: relative; height: var(--line-raster); background: var(--color-raised); overflow: hidden; }
+.meter-fill {
+  position: absolute; inset: 0; background: var(--color-phosphor);
+  transform: scaleX(var(--done, 0)); transform-origin: left;
+  transition: transform var(--dur-decay) var(--ease-out-expo);
+}
+
+.progress { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
+.progress li {
+  position: relative; overflow: hidden;
+  display: grid; align-items: baseline; column-gap: var(--space-3);
+  grid-template-columns: var(--stage-mark-w) var(--stage-step-w) var(--stage-who-w) minmax(0, 1fr);
+  padding: var(--space-2) 0;
+}
+.progress .step { font: var(--fw-medium) var(--fs-stage)/var(--lh-snug) var(--font-body); }
+.progress .who  { font: var(--fw-regular) var(--fs-small)/var(--lh-snug) var(--font-body); color: var(--color-text-muted); }
+/* The server's own sentence for the stage, in the brief's voice. */
+.progress .label { font: var(--fw-regular) var(--fs-stage-label)/var(--lh-snug) var(--font-display); color: var(--color-text-primary); }
+.progress li.pending .step, .progress li.pending .label,
+.progress li.stopped .label { color: var(--color-text-muted); }
+
+/* Stage marks, drawn: hollow square waiting, lit square running, check done, dash stopped. */
+.progress .mark { position: relative; width: var(--stage-mark-w); height: var(--stage-mark-w); align-self: center; border-radius: 1px; }
+.progress li.pending .mark { border: var(--line-mark) solid var(--color-line); }
+.progress li.running .mark { background: var(--color-phosphor); }
+.progress li.done .mark::before {
+  content: ""; position: absolute; left: 30%; top: -5%; width: 35%; height: 75%;
+  border-right: var(--line-mark) solid var(--color-phosphor); border-bottom: var(--line-mark) solid var(--color-phosphor);
+  transform: rotate(45deg);
+}
+.progress li.stopped .mark { height: var(--line-mark); background: var(--color-text-muted); }
+/* The running stage keeps moving: a scan travels under its row (static under reduced motion). */
+.progress li.running::after {
+  content: ""; position: absolute; left: 0; bottom: 0; width: 100%; height: var(--line-mark);
+  background: var(--color-phosphor); opacity: var(--scan-rest-opacity);
+}
+
+.analysis-error {
+  margin: var(--space-4) 0 0; padding: var(--space-3); max-width: 60ch;
+  background: var(--color-surface); border-radius: var(--radius-control);
+  font: var(--fw-regular) var(--fs-stage)/var(--lh-body) var(--font-body); color: var(--color-error);
+}
+.analysis-actions { margin-top: var(--space-5); }
+
+@media (max-width: 40rem) {
+  .progress li {
+    grid-template-columns: var(--stage-mark-w) minmax(0, 1fr);
+    grid-template-areas: "mark step" ". who" ". label";
+    row-gap: var(--space-0);
+  }
+  .progress .mark { grid-area: mark; }
+  .progress .step { grid-area: step; }
+  .progress .who { grid-area: who; }
+  .progress .label { grid-area: label; }
+}
+
+/* ---- The proof lock: raw letters are checked one by one into the brief's own face ---- */
+@media (prefers-reduced-motion: no-preference) {
+  .wm::before { animation: wm-sweep var(--dur-sweep) var(--ease-out-expo) var(--delay-sweep) both; }
+  .wm-l { --lock: calc(var(--delay-lock) + var(--i) * var(--stagger-lock)); }
+  .wm-raw {
+    animation: wm-raw-in var(--dur-fast) linear var(--delay-raw) both,
+               wm-raw-out var(--dur-instant) linear var(--lock) forwards;
+  }
+  .wm-true { animation: wm-true-in var(--dur-instant) linear var(--lock) backwards; }
+  .wm-l::after { animation: wm-bloom var(--dur-decay) var(--ease-out-quint) var(--lock) backwards; }
+  .wm { animation: wm-settle var(--dur-flicker) linear var(--delay-flicker) both; }
+
+  .nav, .tagline { --order: 0; }
+  .ask { --order: 1; }
+  .how { --order: 2; }
+  .nav, .tagline, .ask, .how {
+    animation: entry-rise var(--dur-medium) var(--ease-out-quint)
+               calc(var(--delay-reveal) + var(--order) * var(--stagger-reveal)) both;
+  }
+
+  /* Analysis: the name lights the way each wordmark letter did, then the stages rise in. */
+  .subject::after { animation: wm-bloom var(--dur-decay) var(--ease-out-quint) var(--delay-analysis) backwards; }
+  .analysis-head { --order: 0; }
+  .stages { --order: 1; }
+  .analysis-actions { --order: 2; }
+  .analysis-head, .stages, .analysis-actions {
+    animation: entry-rise var(--dur-medium) var(--ease-out-quint)
+               calc(var(--delay-analysis) + var(--order) * var(--stagger-reveal)) both;
+  }
+  .progress li.running::after {
+    width: var(--scan-w); opacity: var(--scan-opacity);
+    animation: stage-scan var(--dur-scan) var(--ease-standard) infinite;
+  }
+}
+@keyframes stage-scan {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(var(--scan-travel)); }
+}
+@keyframes wm-sweep {
+  0%   { opacity: 1; transform: scaleX(0); }
+  30%  { opacity: 1; transform: scaleX(1); }
+  100% { opacity: 0; transform: scaleX(1); }
+}
+@keyframes wm-raw-in  { from { opacity: 0; } to { opacity: var(--opacity-raw); } }
+@keyframes wm-raw-out { from { opacity: var(--opacity-raw); } to { opacity: 0; } }
+@keyframes wm-true-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes wm-bloom {
+  0%   { opacity: 0; }
+  15%  { opacity: 1; }
+  100% { opacity: var(--glow-rest); }
+}
+@keyframes wm-settle {
+  0%, 100% { opacity: 1; }
+  40%      { opacity: var(--flicker-depth); }
+}
+@keyframes entry-rise {
+  from { opacity: 0; transform: translateY(var(--rise)); }
+  to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .entry *, .entry *::before, .entry *::after,
+  .analysis *, .analysis *::before, .analysis *::after { transition: none !important; }
+}
+/* High-contrast mode: the plain wordmark only. */
+@media (forced-colors: active) {
+  .entry::before, .entry::after, .wm::before, .wm-raw, .wm-l::after,
+  .analysis::before, .analysis::after, .subject::after { display: none; }
 }
