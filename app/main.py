@@ -1,7 +1,7 @@
 """The Vouch web server.
 
-Start it from the project folder (Bifrost must already be running):
-    .venv\\Scripts\\python.exe -m uvicorn app.main:app --port 8000
+Start it from the project folder, with the .venv active (Bifrost must already be running):
+    python -m uvicorn app.main:app --port 8000
 Then open http://localhost:8000
 """
 import asyncio
@@ -102,9 +102,9 @@ def _bifrost_type(error: Exception) -> str:
 def _friendly(error: Exception) -> str:
     """Errors say what went wrong and how to fix it, recognised by their type."""
     if isinstance(error, (tavily_errors.InvalidAPIKeyError, tavily_errors.MissingAPIKeyError)):
-        return "Tavily rejected the API key. Check TAVILY_API_KEY in .env (scripts\\set_keys.py)."
+        return "Tavily rejected the API key. Check TAVILY_API_KEY in .env (run: python scripts/set_keys.py)."
     if isinstance(error, KeyError) and "TAVILY" in str(error):
-        return "TAVILY_API_KEY is missing from .env. Run scripts\\set_keys.py."
+        return "TAVILY_API_KEY is missing from .env. Run: python scripts/set_keys.py"
     if isinstance(error, tavily_errors.UsageLimitExceededError):
         return "Tavily's free credits are used up for this month."
     if isinstance(error, (tavily_errors.TimeoutError, TimeoutError)):
@@ -115,7 +115,7 @@ def _friendly(error: Exception) -> str:
         return "The model took too long to answer. Try again; Bifrost may switch to a faster model."
     if isinstance(error, (openai.APIConnectionError, httpx.ConnectError)):
         return ("Can't reach the model gateway. Start Bifrost with "
-                "scripts\\start_bifrost.py, then try again.")
+                "python scripts/start_bifrost.py, then try again.")
     if isinstance(error, openai.APIStatusError) and error.status_code == 402:
         return ("Vouch's daily model budget in Bifrost is used up. It resets tomorrow; "
                 "the limit is set in bifrost/config.json.")

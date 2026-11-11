@@ -125,41 +125,62 @@ The tamper test changes one thing at a time in a story that passed: a figure in 
 
 **What these numbers do not show.** The subjects are well-covered companies and one person, one brief each per run. The tamper test uses corruptions we designed, so it proves the checks work as specified, not that they catch every kind of mistake. Nobody has hand-graded whether each summary's interpretation is right.
 
-## Run it yourself (Windows)
+## Run it yourself (macOS, Linux or Windows)
 
 Requirements: Python 3.12+, Node.js LTS (for Bifrost), and three free API keys: [Tavily](https://tavily.com), [Groq](https://console.groq.com), [Google AI Studio](https://aistudio.google.com). None need a card.
 
+**1. Get the code and a virtual environment.** Only this step differs by system.
+
+macOS or Linux (Terminal):
+
+```bash
+git clone https://github.com/ussr07/vouch.git
+cd vouch
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+Windows (PowerShell):
+
 ```powershell
-git clone <this repo> vouch
+git clone https://github.com/ussr07/vouch.git
 cd vouch
 python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe scripts\set_keys.py        # paste the three keys (hidden), saved to .env
-.\.venv\Scripts\python.exe scripts\check_services.py  # one small real call to each service
+.\.venv\Scripts\Activate.ps1
+```
+
+If PowerShell refuses to run `Activate.ps1`, run `Set-ExecutionPolicy -Scope Process Bypass` once in that window and try again.
+
+**2. Everything else is the same on every system,** typed in a terminal where the environment is active (the prompt starts with `(.venv)`). Every new terminal needs the activate line from step 1 first.
+
+```bash
+python -m pip install -r requirements.txt
+python scripts/set_keys.py        # paste the three keys (hidden), saved to .env
+python scripts/check_services.py  # one small real call to each service
 ```
 
 Terminal 1, the gateway (first start downloads Bifrost once, about 140 MB):
 
-```powershell
-.\.venv\Scripts\python.exe scripts\start_bifrost.py
+```bash
+python scripts/start_bifrost.py
 ```
 
 Terminal 2, check the gateway and its fallback, then start Vouch:
 
-```powershell
-.\.venv\Scripts\python.exe scripts\check_bifrost.py
-.\.venv\Scripts\python.exe scripts\check_governance.py      # limits, usage, and a refused fake key
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --port 8000
+```bash
+python scripts/check_bifrost.py
+python scripts/check_governance.py      # limits, usage, and a refused fake key
+python -m uvicorn app.main:app --port 8000
 ```
 
-Open http://localhost:8000. On macOS or Linux, use `.venv/bin/python` instead of `.\.venv\Scripts\python.exe`.
+Open http://localhost:8000.
 
 Other commands:
 
-```powershell
-.\.venv\Scripts\python.exe -m unittest                                   # offline tests, no credits (6 need Node; skipped without it)
-.\.venv\Scripts\python.exe scripts\try_brief.py "Zerodha" company 2026-11-14 partnership
-.\.venv\Scripts\python.exe eval\run_eval.py                              # the measurements above
+```bash
+python -m unittest                                         # offline tests, no credits (6 need Node; skipped without it)
+python scripts/try_brief.py "Zerodha" company 2026-11-14 partnership
+python eval/run_eval.py                                    # the measurements above
 ```
 
 ## Project layout

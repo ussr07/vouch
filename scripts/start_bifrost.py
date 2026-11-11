@@ -36,7 +36,9 @@ if missing:
 
 load_dotenv(ENV_FILE)  # puts GROQ_API_KEY, VOUCH_VK etc. into this process's environment
 
-npx = shutil.which("npx") or shutil.which("npx.cmd")
+npx = shutil.which("npx")
+if npx is None and os.name == "nt":   # Windows names it npx.cmd
+    npx = shutil.which("npx.cmd")
 if npx is None:
     raise SystemExit("npx not found. Install Node.js LTS and reopen the terminal.")
 
