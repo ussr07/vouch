@@ -178,7 +178,7 @@ Open http://localhost:8000.
 Other commands:
 
 ```bash
-python -m unittest                                         # offline tests, no credits (6 need Node; skipped without it)
+python -m unittest                                         # offline tests, no credits (4 need Node; skipped without it)
 python scripts/try_brief.py "Zerodha" company 2026-11-14 partnership
 python eval/run_eval.py                                    # the measurements above
 ```
