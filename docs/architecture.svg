@@ -12,7 +12,8 @@ text { font-family: -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-ser
 .cap { fill: #9A9A9A; font-size: 11px; font-style: italic; }
 </style>
 </defs>
-<rect width="1200" height="580" rx="18" fill="url(#ember)"/>
+<linearGradient id="frame" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F16001"/><stop offset="0.45" stop-color="#C10801"/><stop offset="0.7" stop-color="#2A0703"/><stop offset="1" stop-color="#D9C3AB"/></linearGradient>
+<rect x="2" y="2" width="1196" height="576" rx="18" fill="url(#ember)" stroke="url(#frame)" stroke-width="4"/>
 <path d="M144 302.0 H164" fill="none" stroke="#3A3A3A" stroke-width="1.5" marker-end="url(#arrow)"/>
 <path d="M144 302.0 H164" fill="none" stroke="#E85002" stroke-opacity="0.35" stroke-width="1.5" stroke-dasharray="2 14"><animate attributeName="stroke-dashoffset" from="32" to="0" dur="1.6s" repeatCount="indefinite"/></path>
 <path d="M292 302.0 H312" fill="none" stroke="#3A3A3A" stroke-width="1.5" marker-end="url(#arrow)"/>
