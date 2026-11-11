@@ -1,0 +1,30 @@
+# Vouch and its Bifrost gateway, started together:  docker compose up --build
+# Keys come from .env (see "Run with Docker" in the README).
+
+services:
+  bifrost:
+    image: maximhq/bifrost
+    env_file: .env                 # GROQ_API_KEY, GEMINI_API_KEY, VOUCH_VK, admin login
+    environment:
+      APP_HOST: 0.0.0.0            # reachable from the vouch container
+      APP_PORT: "8080"
+    volumes:
+      - ./bifrost:/app/data        # the mounted folder is Bifrost's app dir: config.json lives here
+    ports:
+      - "8080:8080"                # gateway and dashboard on http://localhost:8080
+    restart: unless-stopped
+
+  vouch:
+    build: .
+    env_file: .env                 # TAVILY_API_KEY, VOUCH_VK
+    environment:
+      BIFROST_URL: http://bifrost:8080/v1
+      BIFROST_ADMIN_URL: http://bifrost:8080
+    volumes:
+      - ./data:/app/data           # saved briefs and the search cache survive restarts
+      - ./.env:/app/.env           # lets scripts/make_keys.py add Vouch's keys to your .env
+    ports:
+      - "8000:8000"                # Vouch on http://localhost:8000
+    depends_on:
+      - bifrost
+    restart: unless-stopped

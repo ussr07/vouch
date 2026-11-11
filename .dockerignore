@@ -1,0 +1,15 @@
+.git
+.venv
+.env
+data
+docs
+tests
+bifrost
+**/__pycache__
+**/*.pyc
+*.db
+*.tmp
+.impeccable
+eval/RESULTS-run5.md
+eval/results-run5.json
+scripts/_*.py

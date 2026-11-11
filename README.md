@@ -18,12 +18,13 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/tests-122%20passing-E85002?labelColor=2A0703" alt="tests: 122 passing">
+  <img src="https://img.shields.io/badge/tests-125%20passing-E85002?labelColor=2A0703" alt="tests: 125 passing">
   <img src="https://img.shields.io/badge/search-Tavily-E85002?labelColor=2A0703" alt="search: Tavily">
   <img src="https://img.shields.io/badge/gateway-Bifrost-E85002?labelColor=2A0703" alt="gateway: Bifrost">
   <img src="https://img.shields.io/badge/AI-gpt--oss%20%2B%20Gemini-E85002?labelColor=2A0703" alt="AI: gpt-oss + Gemini">
   <img src="https://img.shields.io/badge/python-3.12%2B-E85002?labelColor=2A0703" alt="python: 3.12+">
   <img src="https://img.shields.io/badge/server-FastAPI-E85002?labelColor=2A0703" alt="server: FastAPI">
+  <img src="https://img.shields.io/badge/run%20with-Docker-E85002?labelColor=2A0703" alt="run with: Docker">
   <img src="https://img.shields.io/badge/license-MIT-E85002?labelColor=2A0703" alt="license: MIT">
 </p>
 
@@ -50,6 +51,7 @@ Built for the **Geek Room Global AI Hackathon 2026**, problem statement **Tavily
 - [Reliability and safety](#reliability-and-safety)
 - [Results](#results)
 - [Run it yourself](#run-it-yourself-macos-linux-or-windows)
+- [Run with Docker](#run-with-docker)
 - [Configuration](#configuration)
 - [Project layout](#project-layout)
 - [How it would scale](#how-it-would-scale)
@@ -124,9 +126,9 @@ If a model is down or rate-limited, Bifrost retries the same request on `gemini/
 | `TAVILY_API_KEY` | Tavily search | Vouch (steps 1 and 6) | `scripts/set_keys.py` |
 | `GROQ_API_KEY` | Groq models (gpt-oss, Qwen) | Bifrost only | `scripts/set_keys.py` |
 | `GEMINI_API_KEY` | Google AI Studio (Gemini fallback) | Bifrost only | `scripts/set_keys.py` |
-| `VOUCH_VK` | Vouch's Bifrost virtual key | Vouch, on every model call | Created by `scripts/start_bifrost.py` |
-| `VOUCH_DEMO_VK` | A second, tightly limited virtual key | `scripts/check_governance.py` | Created by `scripts/start_bifrost.py` |
-| `BIFROST_ADMIN_USERNAME`, `BIFROST_ADMIN_PASSWORD` | Bifrost dashboard login | Usage readout (`/api/gateway`) | Created by `scripts/start_bifrost.py` |
+| `VOUCH_VK` | Vouch's Bifrost virtual key | Vouch, on every model call | Created by `scripts/make_keys.py` (run for you by `scripts/start_bifrost.py`) |
+| `VOUCH_DEMO_VK` | A second, tightly limited virtual key | `scripts/check_governance.py` | Created by `scripts/make_keys.py` (run for you by `scripts/start_bifrost.py`) |
+| `BIFROST_ADMIN_USERNAME`, `BIFROST_ADMIN_PASSWORD` | Bifrost dashboard login | Usage readout (`/api/gateway`) | Created by `scripts/make_keys.py` (run for you by `scripts/start_bifrost.py`) |
 
 All keys live in `.env`, which git ignores (`.env.example` lists them with empty values). `scripts/set_keys.py` reads them with hidden input. Vouch's application code never holds a model provider key: it only sends its virtual key to Bifrost, and Bifrost holds the Groq and Gemini keys. `bifrost/config.json` refers to keys by environment variable name only, so it is safe to commit. Yahoo Finance needs no key.
 
@@ -247,12 +249,40 @@ Open http://localhost:8000.
 **Tests and tools:**
 
 ```bash
-python -m unittest                                         # 122 offline tests, no credits (10 need Node; skipped without it)
+python -m unittest                                         # 125 offline tests, no credits (10 need Node; skipped without it)
 python scripts/try_brief.py "Zerodha" company 2026-11-14 partnership
 python eval/run_eval.py                                    # the measurements above
 ```
 
 The tests run offline against fake Tavily and Bifrost responses, so they cost nothing and need no keys.
+
+## Run with Docker
+
+Docker runs Vouch and the Bifrost gateway together, with nothing to install but Docker (Docker Desktop on macOS and Windows, Docker Engine with the Compose plugin on Linux).
+
+**1. Add your keys.** Copy the example file and paste your Tavily, Groq and Gemini keys after the `=` signs:
+
+```bash
+git clone https://github.com/ussr07/vouch.git
+cd vouch
+cp .env.example .env              # Windows PowerShell: Copy-Item .env.example .env
+```
+
+**2. Create Vouch's Bifrost keys** (its virtual keys and the dashboard login). This adds them to `.env` once and never changes a key that is already set:
+
+```bash
+docker compose run --rm --no-deps vouch python scripts/make_keys.py
+```
+
+**3. Start both services:**
+
+```bash
+docker compose up --build
+```
+
+Open http://localhost:8000 for Vouch. The Bifrost gateway and its dashboard are on http://localhost:8080 (sign in with `BIFROST_ADMIN_USERNAME` and `BIFROST_ADMIN_PASSWORD` from `.env`). Saved briefs and the search cache are kept in `./data`, and Bifrost reads `./bifrost/config.json`, so both survive a restart. Stop with `Ctrl+C`, or `docker compose down`.
+
+The Vouch container reaches the gateway at `http://bifrost:8080` (set in `docker-compose.yml`); the gateway holds the Groq and Gemini keys, exactly as in the local setup.
 
 ## Configuration
 
@@ -283,10 +313,12 @@ vouch/store.py      saved briefs, reopened by id without new API calls
 vouch/gateway.py    reads Vouch's usage, limits and spend from Bifrost governance
 app/                FastAPI server (streams stages) and the web page (app/static: search, analysis, brief)
 app/static/stats.js the brief's numbers, worked out from its own data (tested under Node)
-tests/              122 offline tests: logic, pipeline, growth, server and the brief's numbers
+tests/              125 offline tests: logic, pipeline, growth, server, key setup and the brief's numbers
 eval/               evaluation subjects, tamper test and results
 scripts/            key setup, service checks, Bifrost start-up and one-off tryouts
 bifrost/config.json gateway configuration
+Dockerfile          the Vouch image (Python 3.12, FastAPI server and page)
+docker-compose.yml  Vouch and Bifrost together, one command
 docs/               screenshots and the architecture diagram
 ```
 
