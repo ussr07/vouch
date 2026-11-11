@@ -6,11 +6,20 @@ Give Vouch a company or person and a meeting date. It reads the news from the 30
 
 Built for the Geek Room Global AI Hackathon 2026, problem statement **Tavily Research Agent**, using **Tavily** for live research and **Bifrost by Maxim AI** as the model gateway.
 
-![Vouch: the sentence form, live pipeline stages, and a verified story with its quote, outlet count and date](docs/screenshot.jpg)
+![Vouch, clockwise from top left: the question as a sentence, the live analysis screen with each stage and its real counts, a verified story with its quote, outlet count and date, and the brief's header with its numbers](docs/screenshot.jpg)
 
 ## Why it exists
 
 AI research tools write confident summaries, and the reader has no quick way to tell which lines are real. Before a meeting that matters, a wrong "fact" is worse than no fact. Vouch treats the model as a writer, not a judge: the model drafts, and plain code decides what survives.
+
+## What makes it different
+
+**AI writes the draft, code checks the facts, and you see everything that got rejected.**
+
+- **Checked by code, not by another AI.** Most tools ask a model to check a model. In Vouch, plain Python decides: a quote must appear word for word in the article, every figure must appear in the sources, and the quote must share content with the claim. The model cannot argue its way past a string match.
+- **Nothing is dropped silently.** Every rejected article and every AI-written line that failed a check is shown, struck through, with the reason.
+- **Asks instead of guessing.** When a name could mean several companies ("Mercury"), Vouch stops and asks which one, instead of blending them into one wrong brief.
+- **Measured, not claimed.** Across 4 runs, 424 of 424 deliberately corrupted stories were caught, and 9 of 104 AI-written stories (9%) were removed because they couldn't be backed up, before a reader saw them ([Results](#results)).
 
 ## What it does
 
@@ -22,7 +31,13 @@ AI research tools write confident summaries, and the reader has no quick way to 
 | 4. Draft | Model, via Bifrost | Groups articles into stories and writes talking points and questions for the meeting type (investor, sales, partnership, hiring, general). It must cite article numbers and copy one exact supporting quote per story. |
 | 5. Verify | Code | Removes a story if its quote isn't found word for word in the cited article, if any figure in it doesn't appear in its sources, or if the quote shares nothing with the claim. Dates and outlet counts are computed in code. Stories whose quote dates the event before the window are flagged as older events. |
 
-The page shows each stage live as it finishes, then the brief, then **"What we left out"**: every rejected article and every AI-written line that failed a check, struck through, with the reason.
+While Vouch works, an analysis screen shows each stage live as it finishes, with its real counts and who did it (Tavily, code, or the model through Bifrost). The finished brief then opens as its own page at `/brief/<id>`, a link that reopens it later without new API calls. The brief has:
+
+- a numbers panel drawn from the brief's own data: articles kept and filtered out, stories verified and removed by checks, single-source and multi-source stories, and when each story was reported;
+- each story with its quote, the site it was found in, and its flags (quote verified, single source, older event), each shown as a mark plus words, never colour alone;
+- **"What we left out"**: every rejected article and every AI-written line that failed a check, struck through, with the reason;
+- a closing line naming the model that wrote it through Bifrost, its tokens and time, and the Tavily credits used;
+- a "Print or save as PDF" button that gives a light, one-page brief.
 
 ![The rejection ledger: rejected articles and an AI-written claim struck through, each with its reason](docs/ledger.jpg)
 
@@ -142,7 +157,7 @@ Open http://localhost:8000. On macOS or Linux, use `.venv/bin/python` instead of
 Other commands:
 
 ```powershell
-.\.venv\Scripts\python.exe -m unittest                                   # offline tests, no credits
+.\.venv\Scripts\python.exe -m unittest                                   # offline tests, no credits (6 need Node; skipped without it)
 .\.venv\Scripts\python.exe scripts\try_brief.py "Zerodha" company 2026-11-14 partnership
 .\.venv\Scripts\python.exe eval\run_eval.py                              # the measurements above
 ```
@@ -161,11 +176,23 @@ vouch/gateway.py    reads Vouch's usage, limits and spend from Bifrost governanc
 vouch/draft.py      step 4: the drafting prompt
 vouch/verify.py     step 5: quote, figure and relevance checks
 vouch/pipeline.py   runs the steps and reports each stage
-app/                FastAPI server (streams stages) and the web page
-tests/              88 offline tests: logic, pipeline and server (fake Tavily and Bifrost)
+app/                FastAPI server (streams stages) and the web page (app/static: search, analysis, brief)
+app/static/stats.js the brief's numbers, worked out from its own data (tested under Node)
+tests/              94 offline tests: logic, pipeline, server (fake Tavily and Bifrost) and the brief's numbers
 eval/               evaluation subjects, tamper test, results
 bifrost/config.json gateway configuration
 ```
+
+## How it would scale
+
+Today Vouch is a single-user app: one brief at a time, on one machine. Here is what changes for a team or a product, and what already holds:
+
+- **Cost per brief is small and known.** About 4 Tavily credits for a new subject (0 when the search is cached) and 2 model calls, about 7,700 tokens or $0.0016 at list price, as measured by Bifrost.
+- **Limits per team without code changes.** Each team or customer gets its own Bifrost virtual key with its own budget and rate limits; Vouch only sends a different key. Usage per key is already readable through `GET /api/gateway`.
+- **More briefs at once.** The one-at-a-time lock becomes a job queue with several workers. Each brief is an independent run of the pipeline; the only shared state is the search cache and the saved briefs.
+- **Storage.** SQLite becomes Postgres for the cache and saved briefs, with the same two tables.
+- **Shared search cache.** Popular companies are searched once a day for everyone, so Tavily cost grows with the number of distinct subjects, not the number of users.
+- **More model providers.** A provider is added in `bifrost/config.json` and its model name added to the fallback list in `vouch/llm.py`; the pipeline itself does not change.
 
 ## Limitations
 
@@ -173,6 +200,7 @@ bifrost/config.json gateway configuration
 - **Snippets, not full articles.** Verification uses the text Tavily returns for each result, not the whole page.
 - **Headline rule is strict.** Requiring the subject's name in the headline sometimes drops a real article (for example "Infosys Chairman calls job fears hogwash" doesn't name him). Every such drop is shown in the ledger.
 - **News coverage decides quality.** Small private companies with little coverage get short briefs, and Vouch says so rather than padding.
+- **Saved briefs are local.** A brief's link (`/brief/<id>`) opens only on the computer that made it, because briefs are stored in a local SQLite file.
 - **Free tiers.** Tavily's free plan is 1,000 credits a month (about 4 per new brief). Groq and Gemini free tiers rate-limit; Bifrost's fallback covers short outages, not a full day's limit.
 
 ## License
