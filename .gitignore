@@ -8,3 +8,4 @@ bifrost/*.db-*
 bifrost/logs/
 scripts/_*.py
 *.tmp
+.impeccable/
