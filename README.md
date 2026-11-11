@@ -30,14 +30,17 @@ AI research tools write confident summaries, and the reader has no quick way to 
 | 3. Which one? | Model sorts, code decides | The model groups articles by real-world entity. If one entity has 75%+ of articles it is kept; otherwise Vouch stops and asks the user which one they mean (it found 7 different "Mercury"s in one search). |
 | 4. Draft | Model, via Bifrost | Groups articles into stories and writes talking points and questions for the meeting type (investor, sales, partnership, hiring, general). It must cite article numbers and copy one exact supporting quote per story. |
 | 5. Verify | Code | Removes a story if its quote isn't found word for word in the cited article, if any figure in it doesn't appear in its sources, or if the quote shares nothing with the claim. Dates and outlet counts are computed in code. Stories whose quote dates the event before the window are flagged as older events. |
+| 6. Growth | Market data or news, checked in code | Yearly revenue and net profit. A listed company's figures come from Yahoo Finance; otherwise one news search, and code keeps a figure only if its sentence is found word for word in the article and holds that number and year. A person gets their company's growth, if the articles name it. |
 
-While Vouch works, an analysis screen shows each stage live as it finishes, with its real counts and who did it (Tavily, code, or the model through Bifrost). The finished brief then opens as its own page at `/brief/<id>`, a link that reopens it later without new API calls. The brief has:
+While Vouch works, an analysis screen shows each stage live as it finishes, with its real counts and who did it (Tavily, code, or the model through Bifrost). The finished brief then opens as its own page at `/brief/<id>`, a link that reopens it later without new API calls. The brief is a one-screen workspace: a sidebar of sections, a status line, key figures (revenue, net profit, stories verified, articles read, left out, time), and the open section:
 
-- a numbers panel drawn from the brief's own data: articles kept and filtered out, stories verified and removed by checks, single-source and multi-source stories, and when each story was reported;
-- each story with its quote, the site it was found in, and its flags (quote verified, single source, older event), each shown as a mark plus words, never colour alone;
-- **"What we left out"**: every rejected article and every AI-written line that failed a check, struck through, with the reason;
-- a closing line naming the model that wrote it through Bifrost, its tokens and time, and the Tavily credits used;
-- a "Print or save as PDF" button that gives a light, one-page brief.
+- **Overview**: the subject and the growth graph, revenue and net profit by year, each bar linked to its source;
+- **Stories**: the verified stories; each with its quote, the site it was found in, and its flags (quote verified, single source, older event), shown as a mark plus words, never colour alone;
+- **Your meeting**: what to raise and what to ask, each linked to its story;
+- **Left out**: every rejected article and every AI-written line that failed a check, struck through, with the reason, filterable by reason;
+- **The proof**: every stage with its real counts, why things were left out, which model wrote it through Bifrost, its tokens and time, and the Tavily credits used.
+
+The browser's Print gives a light, one-page brief with every section.
 
 ![The rejection ledger: rejected articles and an AI-written claim struck through, each with its reason](docs/ledger.jpg)
 
@@ -76,7 +79,7 @@ Steps 2, 3 (the decision) and 5 are plain Python you can read in `vouch/filters.
 - Every model call (entity sorting and drafting) goes to the local Bifrost gateway at `http://localhost:8080/v1`. Vouch's code never holds a provider key; Bifrost does.
 - Two right-sized models: `groq/openai/gpt-oss-120b` writes the brief and the smaller `groq/openai/gpt-oss-20b` sorts articles by entity. On Groq's free tier each model has its own rate limit, so splitting the work avoids most 429s.
 - Every request lists fallbacks (`gemini/gemini-3.5-flash-lite`, then `groq/qwen/qwen3.8-27b`). When the requested model fails or is rate-limited, Bifrost retries on the next one by itself. The page shows which model actually wrote the brief, read from `extra_fields.routing_info`.
-- **Governance.** Vouch calls Bifrost with its own virtual key (`x-bf-vk`), and Bifrost enforces Vouch's limits: 300 requests and 300,000 tokens a day, and a $1 daily budget priced at list rates. A runaway loop can't drain the free quotas. Tested: a second demo key capped at 2 requests a minute returned 200, 200, then 429 (`scripts/check_governance.py limit`); a made-up key is refused with 401.
+- **Governance.** Vouch calls Bifrost with its own virtual key (`x-bf-vk`), and Bifrost enforces Vouch's limits: 1,000 requests and 1,000,000 tokens a day, and a $1 daily budget priced at list rates. A runaway loop can't drain the free quotas. Tested: a second demo key capped at 2 requests a minute returned 200, 200, then 429 (`scripts/check_governance.py limit`); a made-up key is refused with 401.
 - **Cost per brief, measured by Bifrost.** Bifrost prices every call at the provider's list rate. One brief is 2 model calls, about 7,700 tokens, and about **$0.0016** at list price (free on the free tiers used here). `GET /api/gateway` returns today's requests, tokens and spend for Vouch's key.
 - Bifrost is configured from a plain `bifrost/config.json` that refers to keys by environment variable name, so it is safe to commit. `scripts/start_bifrost.py` creates Vouch's virtual key and a dashboard login in `.env` on first run.
 
@@ -178,7 +181,7 @@ Open http://localhost:8000.
 Other commands:
 
 ```bash
-python -m unittest                                         # offline tests, no credits (4 need Node; skipped without it)
+python -m unittest                                         # offline tests, no credits (8 need Node; skipped without it)
 python scripts/try_brief.py "Zerodha" company 2026-11-14 partnership
 python eval/run_eval.py                                    # the measurements above
 ```
@@ -197,9 +200,10 @@ vouch/gateway.py    reads Vouch's usage, limits and spend from Bifrost governanc
 vouch/draft.py      step 4: the drafting prompt
 vouch/verify.py     step 5: quote, figure and relevance checks
 vouch/pipeline.py   runs the steps and reports each stage
+vouch/growth.py     step 6: yearly revenue and profit, from market data or checked news
 app/                FastAPI server (streams stages) and the web page (app/static: search, analysis, brief)
 app/static/stats.js the brief's numbers, worked out from its own data (tested under Node)
-tests/              94 offline tests: logic, pipeline, server (fake Tavily and Bifrost) and the brief's numbers
+tests/              118 offline tests: logic, pipeline, growth, server (fake Tavily and Bifrost) and the brief's numbers
 eval/               evaluation subjects, tamper test, results
 bifrost/config.json gateway configuration
 ```

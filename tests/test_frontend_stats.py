@@ -26,6 +26,9 @@ process.stdout.write(JSON.stringify({
   numbers: ctx.VouchStats.briefNumbers(brief),
   empty: ctx.VouchStats.emptyMessage(brief),
   pointReason: ctx.VouchStats.POINT_REASON,
+  funnel: ctx.VouchStats.funnelSteps(brief),
+  reasons: ctx.VouchStats.reasonGroups(brief),
+  growth: ctx.VouchStats.growthSeries(brief.growth),
 }));
 """
 
@@ -85,6 +88,54 @@ class Numbers(unittest.TestCase):
         on the verifier's exact wording for a removed talking point."""
         reason = run_stats({"counts": {}, "stories": [], "ledger": {"draft": []}})["pointReason"]
         self.assertIn(f'"{reason}"', VERIFY_PY.read_text(encoding="utf-8"))
+
+
+@unittest.skipUnless(shutil.which("node"), "Node is not installed")
+class Panels(unittest.TestCase):
+    BRIEF = {
+        "counts": {"found": 32, "kept": 24, "shown_to_model": 20, "verified": 2},
+        "stories": [story(3), story(1)],
+        "ledger": {
+            "articles": [{"reason": "not a news article (search engine's own profile page)"}] * 5 +
+                        [{"reason": "'Tcs' only mentioned in passing, not in the headline"}] * 3 +
+                        [{"reason": "about a different Tcs: a bus company"}] +
+                        [{"reason": "not read: the AI reads at most the 20 newest articles"}] * 4,
+            "draft": [{"reason": "quote not found word for word in the cited article"},
+                      {"reason": "not linked to any verified story"}],
+        },
+        "growth": {"figures": [
+            {"year": 2024, "metric": "revenue", "value": 100.0, "currency": "INR"},
+            {"year": 2025, "metric": "revenue", "value": 110.0, "currency": "INR"},
+            {"year": 2023, "metric": "revenue", "value": 80.0, "currency": "INR"},
+            {"year": 2025, "metric": "profit", "value": 20.0, "currency": "INR"},
+        ]},
+    }
+
+    def test_funnel_counts_articles_and_stories_apart(self):
+        steps = {s["key"]: s for s in run_stats(self.BRIEF)["funnel"]}
+        self.assertEqual([steps[k]["value"] for k in ("found", "filtered", "subject", "read")], [32, 24, 23, 20])
+        self.assertEqual({steps[k]["unit"] for k in ("found", "filtered", "subject", "read")}, {"articles"})
+        self.assertEqual((steps["drafted"]["value"], steps["verified"]["value"]), (3, 2))
+        self.assertEqual({steps[k]["unit"] for k in ("drafted", "verified")}, {"stories"})
+
+    def test_every_reason_is_counted_under_a_readable_label(self):
+        reasons = {r["label"]: r["count"] for r in run_stats(self.BRIEF)["reasons"]}
+        self.assertEqual(reasons["Not a news article"], 5)
+        self.assertEqual(reasons["Not read: past the 20-article limit"], 4)
+        self.assertEqual(reasons["About a different subject"], 1)
+        self.assertEqual(reasons["Point not linked to a verified story"], 1)
+        self.assertEqual(sum(reasons.values()), 15)
+
+    def test_growth_is_in_year_order_with_year_on_year_change(self):
+        g = run_stats(self.BRIEF)["growth"]
+        self.assertEqual([f["year"] for f in g["revenue"]], [2023, 2024, 2025])
+        self.assertIsNone(g["revenue"][0]["change"])
+        self.assertAlmostEqual(g["revenue"][2]["change"], 0.10)
+        self.assertEqual((g["first"]["year"], g["latest"]["year"], g["currency"]), (2023, 2025, "INR"))
+
+    def test_one_year_is_not_growth(self):
+        brief = {**self.BRIEF, "growth": {"figures": [{"year": 2025, "metric": "revenue", "value": 1.0, "currency": "USD"}]}}
+        self.assertIsNone(run_stats(brief)["growth"])
 
 
 class PageSource(unittest.TestCase):

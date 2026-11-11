@@ -120,6 +120,13 @@ class Server(unittest.TestCase):
                                    body={"type": "request_limited"}), "reached its daily limit in Bifrost"),
             (openai.RateLimitError("limited", response=httpx.Response(429, request=request),
                                    body={"type": "rate_limit_exceeded"}), "Every model is rate-limited"),
+            # What really arrives: the library's body is only the inner "error"; the label is in
+            # the full reply. This is Bifrost's actual reply when Vouch's daily tokens run out.
+            (openai.RateLimitError("limited", body={"message": "token limit exceeded"},
+                                   response=httpx.Response(429, request=request, json={
+                                       "type": "token_limited", "status_code": 429,
+                                       "error": {"message": "token limit exceeded (300477/300000, resets every 1d)"}})),
+             "reached its daily limit in Bifrost"),
             (openai.APIStatusError("budget", response=httpx.Response(402, request=request),
                                    body={"type": "budget_exceeded"}), "daily model budget"),
             (ZeroDivisionError("boom"), "ZeroDivisionError"),

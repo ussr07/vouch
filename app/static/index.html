@@ -13,7 +13,7 @@
 <meta name="theme-color" content="#080808">
 <!-- A brief's own address (/brief/<id>) is the brief page: no search screen, decided before the first paint. -->
 <script>if (location.pathname.indexOf("/brief/") === 0) document.documentElement.classList.add("route-brief");</script>
-<link rel="stylesheet" href="/static/styles.css?v=6">
+<link rel="stylesheet" href="/static/styles.css?v=17">
 </head>
 <body>
 <main>
@@ -30,7 +30,7 @@
   <header class="masthead">
     <h1 class="wordmark">
       <span class="sr-only">Vouch</span>
-      <span class="wm" aria-hidden="true"><span class="wm-l" data-c="V" style="--i:0"><span class="wm-raw">V</span><span class="wm-true">V</span></span><span class="wm-l" data-c="o" style="--i:1"><span class="wm-raw">o</span><span class="wm-true">o</span></span><span class="wm-l" data-c="u" style="--i:2"><span class="wm-raw">u</span><span class="wm-true">u</span></span><span class="wm-l" data-c="c" style="--i:3"><span class="wm-raw">c</span><span class="wm-true">c</span></span><span class="wm-l" data-c="h" style="--i:4"><span class="wm-raw">h</span><span class="wm-true">h</span></span></span>
+      <span class="wm" aria-hidden="true"><span class="wm-l" data-c="V" style="--i:0"><span class="wm-raw">V</span><span class="wm-true">V</span></span><span class="wm-l" data-c="o" style="--i:1"><span class="wm-raw">o</span><span class="wm-true">o</span></span><span class="wm-l" data-c="u" style="--i:2"><span class="wm-raw">u</span><span class="wm-true">u</span></span><span class="wm-l" data-c="c" style="--i:3"><span class="wm-raw">c</span><span class="wm-true">c</span></span><span class="wm-l" data-c="h" style="--i:4"><span class="wm-raw">h</span><span class="wm-true">h</span></span></span><img class="wm-logo" src="/static/logo.webp" alt="" width="736" height="1038">
     </h1>
     <p class="tagline">Meeting briefs where every line is proven.</p>
   </header>
@@ -93,7 +93,7 @@
 <section id="analysis" class="analysis" hidden aria-labelledby="analysis-title">
  <div class="analysis-frame">
   <div class="analysis-top">
-    <span class="analysis-mark" aria-hidden="true">Vouch</span>
+    <span class="brand" aria-hidden="true"><img class="brand-logo" src="/static/logo.webp" alt="" width="736" height="1038"><span class="analysis-mark">Vouch</span></span>
     <p class="elapsed"><span class="sr-only">Time so far </span><span id="elapsed">0:00</span></p>
   </div>
 
@@ -104,7 +104,7 @@
 
   <div class="stages">
     <div id="meter" class="meter" role="progressbar" aria-label="Stages finished"
-         aria-valuemin="0" aria-valuemax="5" aria-valuenow="0"><span class="meter-fill"></span></div>
+         aria-valuemin="0" aria-valuemax="6" aria-valuenow="0"><span class="meter-fill"></span></div>
     <ol id="progress" class="progress" aria-live="polite"></ol>
     <p id="analysis-error" class="analysis-error" role="alert" hidden></p>
   </div>
@@ -117,16 +117,13 @@
 
 <div class="page">
   <header class="page-bar">
-    <span class="page-bar-mark">Vouch</span>
-    <div class="page-bar-actions">
-      <span id="print-slot"></span>
-      <a class="btn-quiet" href="/">New brief</a>
-    </div>
+    <!-- The brand is the way back: it opens the search page for a new brief. -->
+    <a class="brand page-bar-brand" href="/" aria-label="Vouch: start a new brief"><img class="brand-logo" src="/static/logo.webp" alt="" width="736" height="1038"><span class="page-bar-mark">Vouch</span></a>
   </header>
   <section id="result" class="result" hidden aria-labelledby="result-title"></section>
 </div>
 </main>
-<script src="/static/stats.js?v=1"></script>
-<script src="/static/app.js?v=7"></script>
+<script src="/static/stats.js?v=2"></script>
+<script src="/static/app.js?v=16"></script>
 </body>
 </html>

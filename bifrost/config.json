@@ -48,9 +48,9 @@
     "rate_limits": [
       {
         "id": "rl-vouch-daily",
-        "request_max_limit": 300,
+        "request_max_limit": 1000,
         "request_reset_duration": "1d",
-        "token_max_limit": 300000,
+        "token_max_limit": 1000000,
         "token_reset_duration": "1d"
       },
       {

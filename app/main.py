@@ -94,9 +94,18 @@ def _event(kind: str, data: dict) -> str:
 
 
 def _bifrost_type(error: Exception) -> str:
-    """Bifrost labels its own refusals ("request_limited", "budget_exceeded"...)."""
+    """Bifrost labels its own refusals ("request_limited", "token_limited", "budget_exceeded"...).
+
+    The label sits at the top of Bifrost's reply, but the OpenAI library hands us only the
+    inner "error" part as `body`, so read the full reply as well."""
     body = getattr(error, "body", None)
-    return str(body.get("type", "")) if isinstance(body, dict) else ""
+    if isinstance(body, dict) and body.get("type"):
+        return str(body["type"])
+    try:
+        data = error.response.json()
+    except Exception:
+        return ""
+    return str(data.get("type", "")) if isinstance(data, dict) else ""
 
 
 def _friendly(error: Exception) -> str:
@@ -120,8 +129,8 @@ def _friendly(error: Exception) -> str:
         return ("Vouch's daily model budget in Bifrost is used up. It resets tomorrow; "
                 "the limit is set in bifrost/config.json.")
     if isinstance(error, openai.RateLimitError) and _bifrost_type(error) in ("request_limited", "token_limited"):
-        return ("Vouch has reached its daily limit in Bifrost (bifrost/config.json: 300 requests, "
-                "300,000 tokens a day). It resets tomorrow.")
+        return ("Vouch has reached its daily limit in Bifrost (bifrost/config.json: 1,000 requests, "
+                "1,000,000 tokens a day). It resets tomorrow.")
     if isinstance(error, openai.RateLimitError):
         return "Every model is rate-limited right now. Wait a minute and try again."
     if isinstance(error, openai.APIStatusError):

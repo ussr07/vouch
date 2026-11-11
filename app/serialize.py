@@ -16,6 +16,21 @@ def _site(url: str) -> str:
     return host
 
 
+def _growth(b: Brief) -> dict | None:
+    """Yearly figures, each with where it came from. None when the step didn't run."""
+    g = b.growth
+    if g is None:
+        return None
+    return {
+        "company": g.company, "method": g.method, "symbol": g.symbol, "note": g.note,
+        "person_role": g.person_role, "credits": g.credits, "seconds": g.seconds,
+        "tokens": sum(c.prompt_tokens + c.completion_tokens for c in g.calls),
+        "figures": [{"year": f.year, "metric": f.metric, "value": f.value, "currency": f.currency,
+                     "source_url": _link(f.source_url), "source_name": f.source_name,
+                     "quote": f.quote} for f in g.figures],
+    }
+
+
 def brief_to_dict(b: Brief) -> dict:
     c = b.checked
     return {
@@ -29,7 +44,7 @@ def brief_to_dict(b: Brief) -> dict:
         "counts": {"found": len(b.run.sources),
                    "kept": len(b.entity.kept) if b.entity and not b.entity.needs_choice else len(b.filtered.kept),
                    "shown_to_model": b.articles_shown_to_model, "verified": len(c.stories),
-                   "credits": b.run.credits_used},
+                   "credits": b.run.credits_used, "cache_hits": b.run.cache_hits},
         "model": None if b.model_call is None else {
             "served_by": b.model_call.served_by, "fallback": b.model_call.used_fallback,
             "prompt_tokens": b.model_call.prompt_tokens,
@@ -39,6 +54,8 @@ def brief_to_dict(b: Brief) -> dict:
             "entity_check_tokens": (b.entity_call.prompt_tokens + b.entity_call.completion_tokens)
                                    if b.entity_call else 0},
         "seconds": b.seconds,
+        "timings": b.timings or {},
+        "growth": _growth(b),
         "stories": [{
             "headline": s.headline, "summary": s.summary, "category": s.category,
             "date": s.date.isoformat(), "outlets": s.outlets,
