@@ -46,24 +46,7 @@ The browser's Print gives a light, one-page brief with every section.
 
 ## Architecture
 
-```mermaid
-flowchart LR
-    user([You: name, meeting type, date and time]) --> app[FastAPI server<br/>streams each stage]
-    app --> search[1. Search<br/>4 news angles, 30-day window]
-    search <-->|search + cache| tavily[(Tavily API)]
-    search --> filter[2. Filter<br/>code rules]
-    filter --> entity[3. Which one?<br/>model sorts, code decides]
-    entity -->|several entities| ask([Ask: which one do you mean?])
-    entity --> draft[4. Draft<br/>stories, points, questions]
-    entity <-->|gpt-oss-20b| bifrost
-    draft <-->|gpt-oss-120b| bifrost{{Bifrost gateway<br/>fallbacks: Gemini, Qwen}}
-    draft --> verify[5. Verify<br/>code checks]
-    verify --> brief([Brief + rejection ledger])
-    filter -.->|rejected articles| brief
-    verify -.->|failed AI lines| brief
-    bifrost <--> groq[(Groq)]
-    bifrost <--> gemini[(Gemini)]
-```
+![Vouch architecture, animated: one brief moves from your question through search (Tavily), filter, the which-one check and the draft (models through the Bifrost gateway, with fallbacks), verify and growth (Yahoo Finance) to the brief, while every rejected article and failed AI line flows into the left-out ledger](docs/architecture.svg)
 
 Steps 2, 3 (the decision) and 5 are plain Python you can read in `vouch/filters.py`, `vouch/entity.py` and `vouch/verify.py`. The model's output never reaches the page without passing through them.
 
