@@ -1,11 +1,33 @@
-# Vouch
+<p align="center">
+  <img src="docs/logo.png" width="128" alt="Vouch logo: a skyscraper drawn in dots">
+</p>
 
-**Meeting briefs where every line is proven.**
+<h1 align="center">Vouch</h1>
 
-![Python 3.12+](https://img.shields.io/badge/python-3.12%2B-E85002?style=flat-square)
-![FastAPI](https://img.shields.io/badge/FastAPI-server-2A0703?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-122%20offline-C10801?style=flat-square)
-![License: MIT](https://img.shields.io/badge/license-MIT-D9C3AB?style=flat-square)
+<p align="center">
+  <b>Meeting briefs where every line is proven.</b><br>
+  AI writes the draft. Code checks the facts.
+</p>
+
+<p align="center">
+  <a href="#how-it-works">How it works</a> ·
+  <a href="#run-it-yourself-macos-linux-or-windows">Run it</a> ·
+  <a href="#how-ai-is-used">How AI is used</a> ·
+  <a href="#results">Results</a> ·
+  <a href="#limitations">Honest limits</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/tests-122%20passing-E85002?labelColor=2A0703" alt="tests: 122 passing">
+  <img src="https://img.shields.io/badge/search-Tavily-E85002?labelColor=2A0703" alt="search: Tavily">
+  <img src="https://img.shields.io/badge/gateway-Bifrost-E85002?labelColor=2A0703" alt="gateway: Bifrost">
+  <img src="https://img.shields.io/badge/AI-gpt--oss%20%2B%20Gemini-E85002?labelColor=2A0703" alt="AI: gpt-oss + Gemini">
+  <img src="https://img.shields.io/badge/python-3.12%2B-E85002?labelColor=2A0703" alt="python: 3.12+">
+  <img src="https://img.shields.io/badge/server-FastAPI-E85002?labelColor=2A0703" alt="server: FastAPI">
+  <img src="https://img.shields.io/badge/license-MIT-E85002?labelColor=2A0703" alt="license: MIT">
+</p>
+
+---
 
 Vouch prepares you for a meeting with a company or a person. Give it a name, the kind of meeting and the date. It reads the news from the 30 days before the meeting, writes a brief (what happened, the numbers to have ready, what to raise and what to ask), and then **checks the brief in code**. A story only stays if its quote is found word for word in a real article and every figure in it appears in the sources. Everything Vouch throws out is listed with the reason, so nothing is dropped silently.
 
