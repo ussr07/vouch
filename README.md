@@ -29,6 +29,8 @@
 
 ---
 
+![Vouch architecture, animated: one brief moves from your question through search (Tavily), filter, the which-one check and the draft (models through the Bifrost gateway, with fallbacks), verify and growth (Yahoo Finance) to the brief, while every rejected article and failed AI line flows into the left-out ledger](docs/architecture.svg)
+
 Vouch prepares you for a meeting with a company or a person. Give it a name, the kind of meeting and the date. It reads the news from the 30 days before the meeting, writes a brief (what happened, the numbers to have ready, what to raise and what to ask), and then **checks the brief in code**. A story only stays if its quote is found word for word in a real article and every figure in it appears in the sources. Everything Vouch throws out is listed with the reason, so nothing is dropped silently.
 
 Built for the **Geek Room Global AI Hackathon 2026**, problem statement **Tavily Research Agent**, using **Tavily** for live research and **Bifrost by Maxim AI** as the model gateway.
@@ -99,9 +101,7 @@ The browser's Print gives a light, one-page version of the brief with every sect
 
 ## Architecture
 
-![Vouch architecture, animated: one brief moves from your question through search (Tavily), filter, the which-one check and the draft (models through the Bifrost gateway, with fallbacks), verify and growth (Yahoo Finance) to the brief, while every rejected article and failed AI line flows into the left-out ledger](docs/architecture.svg)
-
-One FastAPI server runs the six stages and streams each one to the page as it finishes (Server-Sent Events). The page is plain HTML, CSS and JavaScript with no build step. Steps 2, 3 (the decision) and 5 are plain Python you can read in `vouch/filters.py`, `vouch/entity.py` and `vouch/verify.py`. The model's output never reaches the page without passing through them.
+The animated diagram at the [top of this page](#vouch) shows one brief moving through Vouch. One FastAPI server runs the six stages and streams each one to the page as it finishes (Server-Sent Events). The page is plain HTML, CSS and JavaScript with no build step. Steps 2, 3 (the decision) and 5 are plain Python you can read in `vouch/filters.py`, `vouch/entity.py` and `vouch/verify.py`. The model's output never reaches the page without passing through them.
 
 ## How AI is used
 
