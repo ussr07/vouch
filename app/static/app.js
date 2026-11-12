@@ -3,6 +3,12 @@
 
 const $ = (id) => document.getElementById(id);
 
+// The GitHub Pages demo sets window.VOUCH_DEMO (scripts/build_site.py): a list of real saved
+// briefs shipped as files. There is no server there, so briefs load from those files and the
+// form points to them instead of searching. Running locally, VOUCH_DEMO is not set.
+const DEMO = Array.isArray(window.VOUCH_DEMO) ? window.VOUCH_DEMO : null;
+const HOME = DEMO ? "./" : "/";
+
 function h(tag, props = {}, ...children) {
   const el = document.createElement(tag);
   for (const [k, v] of Object.entries(props)) {
@@ -485,7 +491,7 @@ function workspace(b, views) {
   ];
   return h("div", { class: "ws" },
     h("aside", { class: "ws-side" },
-      h("a", { class: "brand ws-brand", href: "/", "aria-label": "Vouch: start a new brief" },
+      h("a", { class: "brand ws-brand", href: HOME, "aria-label": "Vouch: start a new brief" },
         h("img", { class: "brand-logo", src: "/static/logo.webp", alt: "", width: "736", height: "1038" }),
         h("span", { class: "ws-brand-name", text: "Vouch" })),
       h("nav", { class: "ws-nav", "aria-label": "Brief sections" }, VIEWS.map(([key, label]) =>
@@ -649,6 +655,11 @@ $("ask").addEventListener("submit", (e) => {
   $("form-error").textContent = "";
   if (!name) { $("form-error").textContent = "Enter a company or person to brief on."; $("name").focus(); return; }
   if (!meeting) { $("form-error").textContent = "Pick the meeting date and time."; $("meeting").focus(); return; }
+  if (DEMO) {
+    $("form-error").textContent = "This online demo can't search the news live (that needs your own API keys). " +
+      "Open one of the real briefs below, or run Vouch on your computer to brief on anyone.";
+    return;
+  }
 
   if (source) source.close();
   showAnalysis(name, $("goal").value, meeting);
@@ -693,16 +704,36 @@ function showMissing(text) {
 }
 
 async function loadSavedBrief() {
-  const id = decodeURIComponent(location.pathname.slice("/brief/".length)).replace(/\/$/, "");
+  // Locally a brief lives at /brief/<id>; on the GitHub Pages demo at ?brief=<id>.
+  const id = DEMO
+    ? (new URLSearchParams(location.search).get("brief") || "")
+    : decodeURIComponent(location.pathname.slice("/brief/".length)).replace(/\/$/, "");
   if (!/^[0-9a-f]{12}$/.test(id)) { showMissing("That link doesn't point to a brief. Make a new one from the start page."); return; }
   try {
-    const res = await fetch(`/api/briefs/${id}`);
-    if (res.status === 404) { showMissing("No saved brief has that link. It may have been made on another computer. Make a new one from the start page."); return; }
+    const res = await fetch(DEMO ? `briefs/${id}.json` : `/api/briefs/${id}`);
+    if (res.status === 404) {
+      showMissing(DEMO ? "This demo has no brief with that link. Open one from the start page."
+                       : "No saved brief has that link. It may have been made on another computer. Make a new one from the start page.");
+      return;
+    }
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     renderBrief(await res.json());
   } catch (e) {
-    showMissing("Couldn't load this brief from the Vouch server. Check that it's still running, then reload the page.");
+    showMissing(DEMO ? "Couldn't load this demo brief. Reload the page to try again."
+                     : "Couldn't load this brief from the Vouch server. Check that it's still running, then reload the page.");
   }
+}
+
+// The demo's start page lists its real briefs under the form.
+if (DEMO && DEMO.length) {
+  const list = h("ul", { class: "demo-list" }, DEMO.map((d) =>
+    h("li", {}, h("a", { href: `?brief=${encodeURIComponent(d.id)}` },
+      h("span", { class: "demo-name", text: d.name }),
+      h("span", { class: "demo-meta", text: `${GOAL_LABEL[d.goal] || "General"} · ${d.verified} ${d.verified === 1 ? "story" : "stories"}` })))));
+  $("how").append(h("section", { class: "demo-briefs", "aria-labelledby": "demo-title" },
+    h("h2", { id: "demo-title", text: "Open a real brief" }),
+    h("p", { text: "Made by Vouch from live news, every quote checked in code. To brief on anyone, run Vouch yourself." }),
+    list));
 }
 
 if (document.documentElement.classList.contains("route-brief")) loadSavedBrief();

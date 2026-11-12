@@ -9,3 +9,4 @@ bifrost/logs/
 scripts/_*.py
 *.tmp
 .impeccable/
+_site/

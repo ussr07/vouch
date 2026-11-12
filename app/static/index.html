@@ -12,8 +12,8 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&text=Vouch&display=block" rel="stylesheet">
 <meta name="theme-color" content="#080808">
 <!-- A brief's own address (/brief/<id>) is the brief page: no search screen, decided before the first paint. -->
-<script>if (location.pathname.indexOf("/brief/") === 0) document.documentElement.classList.add("route-brief");</script>
-<link rel="stylesheet" href="/static/styles.css?v=18">
+<script>if (location.pathname.indexOf("/brief/") === 0 || /[?&]brief=/.test(location.search)) document.documentElement.classList.add("route-brief");</script>
+<link rel="stylesheet" href="/static/styles.css?v=19">
 </head>
 <body>
 <main>
@@ -124,6 +124,6 @@
 </div>
 </main>
 <script src="/static/stats.js?v=3"></script>
-<script src="/static/app.js?v=17"></script>
+<script src="/static/app.js?v=18"></script>
 </body>
 </html>

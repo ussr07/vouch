@@ -10,6 +10,7 @@
 </p>
 
 <p align="center">
+  <a href="https://ussr07.github.io/vouch/"><b>Live demo</b></a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="#run-it-yourself-macos-linux-or-windows">Run it</a> ·
   <a href="#how-ai-is-used">How AI is used</a> ·
@@ -33,6 +34,8 @@
 ![Vouch architecture, animated: one brief moves from your question through search (Tavily), filter, the which-one check and the draft (models through the Bifrost gateway, with fallbacks), verify and growth (Yahoo Finance) to the brief, while every rejected article and failed AI line flows into the left-out ledger](docs/architecture.svg)
 
 Vouch prepares you for a meeting with a company or a person. Give it a name, the kind of meeting and the date. It reads the news from the 30 days before the meeting, writes a brief (what happened, the numbers to have ready, what to raise and what to ask), and then **checks the brief in code**. A story only stays if its quote is found word for word in a real article and every figure in it appears in the sources. Everything Vouch throws out is listed with the reason, so nothing is dropped silently.
+
+**[Try the live demo](https://ussr07.github.io/vouch/)**: four real briefs Vouch made from live news (Accenture, Nvidia, JP Morgan and Jeff Bezos), with every view open to explore. The demo is static, so it can't search new names; to brief on anyone, [run Vouch yourself](#run-it-yourself-macos-linux-or-windows) or [with Docker](#run-with-docker).
 
 Built for the **Geek Room Global AI Hackathon 2026**, problem statement **Tavily Research Agent**, using **Tavily** for live research and **Bifrost by Maxim AI** as the model gateway.
 
@@ -319,6 +322,8 @@ scripts/            key setup, service checks, Bifrost start-up and one-off tryo
 bifrost/config.json gateway configuration
 Dockerfile          the Vouch image (Python 3.12, FastAPI server and page)
 docker-compose.yml  Vouch and Bifrost together, one command
+demo/briefs/        the saved briefs shown on the live demo (scripts/export_demo.py)
+scripts/build_site.py builds the static demo; .github/workflows/pages.yml publishes it to GitHub Pages
 docs/               screenshots and the architecture diagram
 ```
 

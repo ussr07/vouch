@@ -1,0 +1,34 @@
+[
+  {
+    "id": "25282aee48cf",
+    "name": "Accenture",
+    "kind": "company",
+    "goal": "sales",
+    "meeting": "2026-11-14",
+    "verified": 5
+  },
+  {
+    "id": "b5a37f47c406",
+    "name": "Nvidia",
+    "kind": "company",
+    "goal": "partnership",
+    "meeting": "2026-11-13",
+    "verified": 5
+  },
+  {
+    "id": "751286d84bb3",
+    "name": "JP Morgan",
+    "kind": "company",
+    "goal": "sales",
+    "meeting": "2026-11-20",
+    "verified": 5
+  },
+  {
+    "id": "563cf273788e",
+    "name": "Jeff Bezos",
+    "kind": "person",
+    "goal": "general",
+    "meeting": "2026-11-12",
+    "verified": 5
+  }
+]
